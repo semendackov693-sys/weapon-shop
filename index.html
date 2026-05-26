@@ -3,209 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Viper Shop Tycoon Pro</title>
+    <title>Viper Shop Pro</title>
     <script src="https://telegram.org"></script>
     <style>
-        :root {
-            --bg-main: #0b0c10;
-            --bg-forge: #2e241f;
-            --neon-green: #45f3ff;
-            --neon-gold: #ffbd59;
-            --text-main: #c5c6c7;
-            --brdr-radius: 20px;
-        }
-
-        body {
-            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-            background-color: var(--bg-main);
-            margin: 0; padding: 0;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; color: #fff;
-            user-select: none; -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            overflow: hidden; touch-action: manipulation;
-        }
-
-        .screen {
-            width: 100%; max-width: 410px; height: 100vh;
-            background: #1a1a24;
-            box-shadow: 0 0 40px rgba(0,0,0,0.9);
-            position: relative; display: flex; flex-direction: column; overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        .top-bar {
-            background: rgba(15, 16, 21, 0.95);
-            padding: 15px; display: flex; flex-direction: column; align-items: center;
-            border-bottom: 3px solid #4a3b32; gap: 2px; z-index: 10;
-        }
-        .gold-title { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-main); }
-        .gold-amount { 
-            font-size: 32px; font-weight: 900; color: var(--neon-gold);
-            text-shadow: 0 0 15px rgba(255, 189, 89, 0.4);
-            display: flex; align-items: center; gap: 8px;
-        }
-
-        .forge-view {
-            flex: 1; background-color: var(--bg-forge);
-            background-image: 
-                linear-gradient(rgba(0,0,0,0.15) 2px, transparent 2px),
-                linear-gradient(90deg, rgba(0,0,0,0.15) 2px, transparent 2px);
-            background-size: 40px 40px;
-            position: relative; padding: 10px;
-            display: flex; flex-direction: column; gap: 10px;
-            overflow-y: auto;
-        }
-
-        .tab-content { display: none; flex-direction: column; gap: 12px; width: 100%; height: 100%; }
+        body { font-family: sans-serif; background: #0f1015; margin: 0; padding: 0; display: flex; justify-content: center; height: 100vh; color: #fff; user-select: none; -webkit-user-select: none; }
+        .screen { width: 100%; max-width: 410px; height: 100vh; background: #1a1a24; display: flex; flex-direction: column; overflow: hidden; }
+        .top-bar { background: #0f1015; padding: 15px; display: flex; flex-direction: column; align-items: center; border-bottom: 3px solid #4a3b32; }
+        .gold-amount { font-size: 32px; font-weight: 900; color: #ffbd59; text-shadow: 0 0 15px rgba(255,189,89,0.4); }
+        .forge-view { flex: 1; background: #2e241f; padding: 10px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        .tab-content { display: none; flex-direction: column; gap: 12px; height: 100%; }
         .tab-content.active { display: flex; }
-
-        .workbench-zone {
-            background: rgba(40, 30, 25, 0.7);
-            border: 2px solid #5c4335; border-radius: 16px;
-            height: 145px; position: relative; box-sizing: border-box;
-            padding: 10px; overflow: hidden;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
-        }
-
-        .forge-object { position: absolute; font-size: 24px; z-index: 2; }
-        .obj-anvil { top: 15px; left: 25px; }     
-        .obj-chest { bottom: 15px; left: 25px; }   
-
-        .wb-info-block {
-            position: absolute; right: 10px; top: 10px; bottom: 10px;
-            width: 200px; display: flex; flex-direction: column; justify-content: space-between;
-            background: rgba(20, 15, 12, 0.85); padding: 8px; border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05); z-index: 5;
-        }
-        .wb-meta { display: flex; justify-content: space-between; align-items: center; }
-        .wb-name { font-size: 14px; font-weight: 800; color: #fff; }
-        .wb-lvl { font-size: 11px; color: var(--neon-green); font-weight: 700; }
-        .wb-cash { font-size: 12px; color: #00ff88; font-weight: 700; margin: 2px 0; }
-
-        .progress-box {
-            background: #140f0c; border-radius: 6px; height: 8px; width: 100%;
-            overflow: hidden; border: 1px solid rgba(255,255,255,0.1); margin: 4px 0;
-        }
-        .progress-fill { background: linear-gradient(90deg, #00ff88, var(--neon-green)); width: 0%; height: 100%; }
-
-        .mini-up-btn {
-            background: linear-gradient(135deg, #4a3b32, #2e241f); color: #fff;
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 0;
-            width: 100%; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.1s;
-        }
-        .mini-up-btn.affordable { background: linear-gradient(135deg, #ffbd59, #ff9100) !important; color: #0b0c10 !important; }
-        .mini-up-btn:active { transform: scale(0.96); }
-        .mini-up-btn.error { animation: shake 0.3s ease-in-out; background: #e94560 !important; }
-
-        .char-worker {
-            position: absolute; font-size: 28px; left: 22px; top: 15px;
-            z-index: 4; transition: top 0.1s linear, transform 0.1s ease;
-            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.4));
-        }
-
-        .clicker-tab-zone {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100%; padding: 20px 0;
-        }
-        .big-anvil {
-            font-size: 90px; width: 180px; height: 180px;
-            background: radial-gradient(circle, rgba(69,243,255,0.2) 0%, rgba(0,0,0,0) 70%);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: transform 0.05s ease;
-        }
-        .big-anvil:active { transform: scale(0.9); }
-
-        .income-pop {
-            position: absolute; color: #00ff88; font-weight: 900; font-size: 18px;
-            animation: popUp 0.5s ease-out forwards; pointer-events: none; z-index: 99;
-        }
-        @keyframes popUp {
-            0% { transform: translateY(0) scale(0.8); opacity: 1; }
-            100% { transform: translateY(-35px) scale(1.1); opacity: 0; }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
-        }
-
-        .bottom-menu { 
-            background: #0f1015; height: 75px; 
-            display: flex; justify-content: space-around; align-items: center;
-            border-top: 2px solid #4a3b32; z-index: 10;
-        }
-        .menu-item { 
-            display: flex; flex-direction: column; align-items: center; gap: 2px;
-            font-size: 20px; opacity: 0.4; transition: all 0.2s; cursor: pointer;
-        }
-        .menu-item span { font-size: 10px; font-weight: 600; text-transform: uppercase; }
-        .menu-item.active { opacity: 1; color: var(--neon-green); transform: scale(1.05); }
-        
-        .reset-btn { background: none; border: none; color: #e94560; font-size: 10px; text-decoration: underline; opacity: 0.4; cursor: pointer; }
+        .workbench-zone { background: rgba(40,30,25,0.7); border: 2px solid #5c4335; border-radius: 16px; height: 145px; position: relative; padding: 10px; box-sizing: border-box; }
+        .forge-object { position: absolute; font-size: 24px; }
+        .obj-anvil { top: 15px; left: 25px; } .obj-chest { bottom: 15px; left: 25px; }   
+        .wb-info-block { position: absolute; right: 10px; top: 10px; bottom: 10px; width: 200px; display: flex; flex-direction: column; justify-content: space-between; background: rgba(20,15,12,0.85); padding: 8px; border-radius: 12px; }
+        .wb-meta { display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; }
+        .progress-box { background: #140f0c; border-radius: 6px; height: 8px; overflow: hidden; margin: 4px 0; }
+        .progress-fill { background: #45f3ff; width: 0%; height: 100%; }
+        .mini-up-btn { background: #4a3b32; color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 0; width: 100%; font-size: 12px; font-weight: 800; cursor: pointer; }
+        .mini-up-btn.affordable { background: #ffbd59 !important; color: #0b0c10 !important; }
+        .char-worker { position: absolute; font-size: 28px; left: 22px; top: 15px; transition: top 0.1s linear; }
+        .clicker-tab-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        .big-anvil { font-size: 90px; width: 180px; height: 180px; background: rgba(69,243,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .income-pop { position: absolute; color: #00ff88; font-weight: 900; font-size: 18px; animation: popUp 0.5s ease-out forwards; pointer-events: none; }
+        @keyframes popUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-35px); opacity: 0; } }
+        .bottom-menu { background: #0f1015; height: 75px; display: flex; justify-content: space-around; align-items: center; border-top: 2px solid #4a3b32; }
+        .menu-item { display: flex; flex-direction: column; align-items: center; font-size: 20px; opacity: 0.4; cursor: pointer; }
+        .menu-item.active { opacity: 1; color: #45f3ff; }
     </style>
 </head>
 <body>
-
 <div class="screen">
     <div class="top-bar">
-        <div class="gold-title">Сбережения Лавки</div>
         <div class="gold-amount">💰 <span id="gold-display">10.00B</span></div>
-        <button class="reset-btn" id="res-btn">Сбросить сейвы</button>
     </div>
-
     <div class="forge-view">
-        
-        <!-- ТАБ 1: КУЗНИЦА -->
         <div id="tab-forge" class="tab-content active">
             <div class="workbench-zone" id="wb1-zone">
-                <div class="forge-object obj-anvil">⚒️</div>
-                <div class="forge-object obj-chest">📦</div>
-                <div class="char-worker" id="worker1">🧑‍🏭</div>
+                <div class="forge-object obj-anvil">⚒️</div><div class="forge-object obj-chest">📦</div><div class="char-worker" id="worker1">🧑‍🏭</div>
                 <div class="wb-info-block">
-                    <div class="wb-meta">
-                        <span class="wb-name">🗡️ <span id="wb1-title">Ржавый Нож</span></span>
-                        <span class="wb-lvl" id="wb1-lvl">Lvl 1</span>
-                    </div>
-                    <div class="wb-cash">+<span id="wb1-income">100M</span> 💰</div>
+                    <div class="wb-meta"><span id="wb1-title">Нож</span><span id="wb1-lvl">Lvl 1</span></div>
+                    <div style="color:#00ff88;">+<span id="wb1-income">100M</span> 💰</div>
                     <div class="progress-box"><div class="progress-fill" id="wb1-progress"></div></div>
                     <button class="mini-up-btn" id="wb1-btn">Апгрейд: <span id="wb1-cost">500M</span></button>
                 </div>
             </div>
-
             <div class="workbench-zone" id="wb2-zone">
-                <div class="forge-object obj-anvil">⚒️</div>
-                <div class="forge-object obj-chest">📦</div>
-                <div class="char-worker" id="worker2">🧝‍♂️</div>
+                <div class="forge-object obj-anvil">⚒️</div><div class="forge-object obj-chest">📦</div><div class="char-worker" id="worker2">🧝‍♂️</div>
                 <div class="wb-info-block">
-                    <div class="wb-meta">
-                        <span class="wb-name">🪓 <span id="wb2-title">Топорик</span></span>
-                        <span class="wb-lvl" id="wb2-lvl">Lvl 1</span>
-                    </div>
-                    <div class="wb-cash">+<span id="wb2-income">800M</span> 💰</div>
+                    <div class="wb-meta"><span id="wb2-title">Топор</span><span id="wb2-lvl">Lvl 1</span></div>
+                    <div style="color:#00ff88;">+<span id="wb2-income">800M</span> 💰</div>
                     <div class="progress-box"><div class="progress-fill" id="wb2-progress"></div></div>
                     <button class="mini-up-btn" id="wb2-btn">Апгрейд: <span id="wb2-cost">2.5B</span></button>
                 </div>
             </div>
-
-            <div class="workbench-zone" id="wb3-zone">
-                <div class="forge-object obj-anvil">⚒️</div>
-                <div class="forge-object obj-chest">📦</div>
-                <div class="char-worker" id="worker3">🧙‍♂️</div>
-                <div class="wb-info-block">
-                    <div class="wb-meta">
-                        <span class="wb-name">🪄 <span id="wb3-title">Палочка</span></span>
-                        <span class="wb-lvl" id="wb3-lvl">Lvl 1</span>
-                    </div>
-                    <div class="wb-cash">+<span id="wb3-income">5.0B</span> 💰</div>
-                    <div class="progress-box"><div class="progress-fill" id="wb3-progress"></div></div>
-                    <button class="mini-up-btn" id="wb3-btn">Апгрейд: <span id="wb3-cost">15.0B</span></button>
-                </div>
-            </div>
         </div>
-
-        <!-- ТАБ 2: КЛИКЕР -->
         <div id="tab-clicker" class="tab-content">
             <div class="clicker-tab-zone">
                 <div class="big-anvil" id="tap-anvil">🔥🔨</div>
+                <div style="margin-top:15px; background:rgba(0,0,0,0.4); padding:8px 16px; border-radius:10px;">Тап: <span style="color:#ffbd59">+10.0M 💰</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="bottom-menu">
+        <div class="menu-item active" id="m-forge">🧱<span>Кузня</span></div>
+        <div class="menu-item" id="m-click">🔨<span>Клик</span></div>
+    </div>
+</div>
+<script>
+    const tg = window.Telegram.WebApp; if (tg) { tg.expand(); }
+    function format(n) { if (n >= 1e12) return (n / 1e12).toFixed(2) + 'T'; if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; return n.toFixed(0); }
+    let gold = 10000000000;
+    let data = {
+        1: { level: 1, income: 100000000, cost: 500000000, progress: 0, speed: 1.5 },
+        2: { level: 1, income: 800000000, cost: 2500000000, progress: 0, speed: 1.0 }
+    };
+    const wpNames = { 1: ["Ржавый Нож", "Острый Меч ⚔️", "Палаш Тьмы 🔥"], 2: ["Топорик", "Боевая Секира 🪓", "Разрушитель ⚡"] };
+
+    function showPop(id, txt, x, y) {
+        let el = document.getElementById(id); if (!el) return;
+        let div = document.createElement("div"); div.className = "income-pop"; div.innerText = txt;
+        div.style.left = x + "px"; div.style.top = y + "px"; el.appendChild(div);
+        setTimeout(() => div.remove(), 500);
+    }
+
+    function updateWbUI(id) {
+        let wb = data[id]; let stage = Math.min(Math.floor((wb.level - 1) / 10), 2);
+        document.getElementById("wb" + id + "-title").innerText = wpNames[id][stage];
+        document.getElementById("wb" + id + "-lvl").innerText = "Lvl " + wb.level;
+        document.getElementById("wb" + id + "-income").innerText = format(wb.income);
+        document.getElementById("wb" + id + "-cost").innerText = format(wb.cost);
+    }
+
+    function updateUI() {
+        document.getElementById("gold-display").innerText = format(gold);
+        for (let id in data) {
+            let btn = document.getElementById("wb" + id + "-btn");
+            if (btn) { if (gold >= data[id].cost) btn.classList.add('affordable'); else btn.classList.remove('affordable'); }
+        }
+    }
+
+    function upgradeWb(id) {
+        let wb = data[id];
+        if (gold >= wb.cost) {
+            gold -= wb.cost; wb.level += 1; wb.income = Math.floor(wb.income * 1.45); wb.cost = Math.floor(wb.cost * 1.55); wb.speed += 0.1;
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            updateWbUI(id); updateUI();
+        }
+    }
+
+    function switchTab(tId, mId) {
+        document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.menu-item').forEach(e => e.classList.remove('active'));
+        document.getElementById(tId).classList.add('active'); document.getElementById(mId).classList.add('active');
+    }
+
+    setInterval(() => {
+        for (let id in data) {
+            let wb = data[id]; wb.progress += wb.speed;
+            let worker = document.getElementById("worker" + id);
+            if (wb.progress <= 50) {
+                let t = 85 - (wb.progress * 2) * 0.7; if (worker) worker.style.top = t + "px";
+            } else {
+                let t = 15 + ((wb.progress - 50) * 2) * 0.7; if (worker) worker.style.top = t + "px";
+            }
+            if (wb.progress >= 100) {
+                wb.progress = 0; gold += wb.income;
+                if (document.getElementById('tab-forge').classList.contains('active')) { showPop("wb" + id + "-zone", "+" + format(wb.income), 25, 95); }
+                updateUI();
+            }
+            let pEl = document.getElementById("wb" + id + "-progress"); if (pEl) pEl.style.width = wb.progress + "%";
+        }
+    }, 60);
+
+    document.getElementById("wb1-btn").addEventListener('click', (e) => { e.preventDefault(); upgradeWb(1); });
+    document.getElementById("wb2-btn").addEventListener('click', (e) => { e.preventDefault(); upgradeWb(2); });
+    document.getElementById("m-forge").addEventListener('click', () => switchTab('tab-forge', 'm-forge'));
+    document.getElementById("m-click").addEventListener('click', () => switchTab('tab-clicker', 'm-click'));
+    document.getElementById("tap-anvil").addEventListener('click', (e) => { e.preventDefault(); gold += 10000000; showPop("tab-clicker", "+10M", 100, 100); updateUI(); });
+
+    window.onload = function() { updateWbUI(1); updateWbUI(2); updateUI(); };
+</script>
+</body>
+</html>
