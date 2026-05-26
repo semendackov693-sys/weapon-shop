@@ -20,11 +20,11 @@
         .wb-meta { display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; }
         .progress-box { background: #140f0c; border-radius: 6px; height: 8px; overflow: hidden; margin: 4px 0; }
         .progress-fill { background: #45f3ff; width: 0%; height: 100%; }
-        .mini-up-btn { background: #4a3b32; color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 0; width: 100%; font-size: 12px; font-weight: 800; cursor: pointer; }
+        .mini-up-btn { background: #4a3b32; color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 0; width: 100%; font-size: 12px; font-weight: 800; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .mini-up-btn.affordable { background: #ffbd59 !important; color: #0b0c10 !important; }
         .char-worker { position: absolute; font-size: 28px; left: 22px; top: 15px; transition: top 0.1s linear; }
         .clicker-tab-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
-        .big-anvil { font-size: 90px; width: 180px; height: 180px; background: rgba(69,243,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .big-anvil { font-size: 90px; width: 180px; height: 180px; background: rgba(69,243,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .income-pop { position: absolute; color: #00ff88; font-weight: 900; font-size: 18px; animation: popUp 0.5s ease-out forwards; pointer-events: none; }
         @keyframes popUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-35px); opacity: 0; } }
         .bottom-menu { background: #0f1015; height: 75px; display: flex; justify-content: space-around; align-items: center; border-top: 2px solid #4a3b32; }
@@ -45,7 +45,7 @@
                     <div class="wb-meta"><span id="wb1-title">Нож</span><span id="wb1-lvl">Lvl 1</span></div>
                     <div style="color:#00ff88;">+<span id="wb1-income">100M</span> 💰</div>
                     <div class="progress-box"><div class="progress-fill" id="wb1-progress"></div></div>
-                    <button class="mini-up-btn" id="wb1-btn">Апгрейд: <span id="wb1-cost">500M</span></button>
+                    <button class="mini-up-btn" id="wb1-btn" ontouchstart="upgradeWb(1)" mousedown="upgradeWb(1)">Апгрейд: <span id="wb1-cost">500M</span></button>
                 </div>
             </div>
             <div class="workbench-zone" id="wb2-zone">
@@ -54,20 +54,20 @@
                     <div class="wb-meta"><span id="wb2-title">Топор</span><span id="wb2-lvl">Lvl 1</span></div>
                     <div style="color:#00ff88;">+<span id="wb2-income">800M</span> 💰</div>
                     <div class="progress-box"><div class="progress-fill" id="wb2-progress"></div></div>
-                    <button class="mini-up-btn" id="wb2-btn">Апгрейд: <span id="wb2-cost">2.5B</span></button>
+                    <button class="mini-up-btn" id="wb2-btn" ontouchstart="upgradeWb(2)" mousedown="upgradeWb(2)">Апгрейд: <span id="wb2-cost">2.5B</span></button>
                 </div>
             </div>
         </div>
         <div id="tab-clicker" class="tab-content">
             <div class="clicker-tab-zone">
-                <div class="big-anvil" id="tap-anvil">🔥🔨</div>
+                <div class="big-anvil" id="tap-anvil" ontouchstart="clickAnvil(event)" mousedown="clickAnvil(event)">🔥🔨</div>
                 <div style="margin-top:15px; background:rgba(0,0,0,0.4); padding:8px 16px; border-radius:10px;">Тап: <span style="color:#ffbd59">+10.0M 💰</span></div>
             </div>
         </div>
     </div>
     <div class="bottom-menu">
-        <div class="menu-item active" id="m-forge">🧱<span>Кузня</span></div>
-        <div class="menu-item" id="m-click">🔨<span>Клик</span></div>
+        <div class="menu-item active" id="m-forge" ontouchstart="switchTab('tab-forge', 'm-forge')" mousedown="switchTab('tab-forge', 'm-forge')">🧱<span>Кузня</span></div>
+        <div class="menu-item" id="m-click" ontouchstart="switchTab('tab-clicker', 'm-click')" mousedown="switchTab('tab-clicker', 'm-click')">🔨<span>Клик</span></div>
     </div>
 </div>
 <script>
@@ -116,6 +116,12 @@
         document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
         document.querySelectorAll('.menu-item').forEach(e => e.classList.remove('active'));
         document.getElementById(tId).classList.add('active'); document.getElementById(mId).classList.add('active');
+        if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    }
+
+    function clickAnvil(e) {
+        gold += 10000000; if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        showPop("tab-clicker", "+10M", 100, 100); updateUI();
     }
 
     setInterval(() => {
@@ -135,12 +141,6 @@
             let pEl = document.getElementById("wb" + id + "-progress"); if (pEl) pEl.style.width = wb.progress + "%";
         }
     }, 60);
-
-    document.getElementById("wb1-btn").addEventListener('click', (e) => { e.preventDefault(); upgradeWb(1); });
-    document.getElementById("wb2-btn").addEventListener('click', (e) => { e.preventDefault(); upgradeWb(2); });
-    document.getElementById("m-forge").addEventListener('click', () => switchTab('tab-forge', 'm-forge'));
-    document.getElementById("m-click").addEventListener('click', () => switchTab('tab-clicker', 'm-click'));
-    document.getElementById("tap-anvil").addEventListener('click', (e) => { e.preventDefault(); gold += 10000000; showPop("tab-clicker", "+10M", 100, 100); updateUI(); });
 
     window.onload = function() { updateWbUI(1); updateWbUI(2); updateUI(); };
 </script>
