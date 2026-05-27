@@ -72,79 +72,21 @@
 </div>
 <script>
     var tg = window.Telegram.WebApp; if (tg) { tg.expand(); }
-    function format(n) { if (isNaN(n) || n === null) return "0"; if (n >= 1e12) return (n / 1e12).toFixed(2) + 'T'; if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; return n.toFixed(0); }
-    
-    // ПРИНУДИТЕЛЬНЫЙ СБРОС КРИВОЙ ПАМЯТИ
+    function format(n) { if (isNaN(n) || n === null) return "0"; if (n >= 1e12) return (n / 1e12).toFixed(2) + "T"; if (n >= 1e9) return (n / 1e9).toFixed(2) + "B"; if (n >= 1e6) return (n / 1e6).toFixed(1) + "M"; return n.toFixed(0); }
     localStorage.clear();
-    
     var gold = 10000000000;
-    var data = {
-        1: { level: 1, income: 100000000, cost: 500000000, progress: 0, speed: 1.5 },
-        2: { level: 1, income: 800000000, cost: 2500000000, progress: 0, speed: 1.0 }
-    };
+    var data = { 1: { level: 1, income: 100000000, cost: 500000000, progress: 0, speed: 1.5 }, 2: { level: 1, income: 800000000, cost: 2500000000, progress: 0, speed: 1.0 } };
     var wpNames = { 1: ["Ржавый Нож", "Острый Меч ⚔️", "Палаш Тьмы 🔥"], 2: ["Топорик", "Боевая Секира 🪓", "Разрушитель ⚡"] };
-
-    function showPop(id, txt, x, y) {
-        var el = document.getElementById(id); if (!el) return;
-        var div = document.createElement("div"); div.className = "income-pop"; div.innerText = txt;
-        div.style.left = x + "px"; div.style.top = y + "px"; el.appendChild(div);
-        setTimeout(function() { div.remove(); }, 500);
-    }
-
-    function updateWbUI(id) {
-        var wb = data[id]; var stage = Math.min(Math.floor((wb.level - 1) / 10), 2);
-        document.getElementById("wb" + id + "-title").innerText = wpNames[id][stage];
-        document.getElementById("wb" + id + "-lvl").innerText = "Lvl " + wb.level;
-        document.getElementById("wb" + id + "-income").innerText = format(wb.income);
-        document.getElementById("wb" + id + "-cost").innerText = format(wb.cost);
-    }
-
-    function updateUI() {
-        document.getElementById("gold-display").innerText = format(gold);
-        for (var id in data) {
-            var btn = document.getElementById("wb" + id + "-btn");
-            if (btn) { if (gold >= data[id].cost) btn.classList.add('affordable'); else btn.classList.remove('affordable'); }
-        }
-    }
-
-    function upgradeWb(id) {
-        var wb = data[id];
-        if (gold >= wb.cost) {
-            gold -= wb.cost; wb.level += 1; wb.income = Math.floor(wb.income * 1.45); wb.cost = Math.floor(wb.cost * 1.55); wb.speed += 0.1;
-            if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            updateWbUI(id); updateUI();
-        }
-    }
-
-    function switchTab(tId, mId) {
-        document.querySelectorAll('.tab-content').forEach(function(e) { e.classList.remove('active'); });
-        document.querySelectorAll('.menu-item').forEach(function(e) { e.classList.remove('active'); });
-        document.getElementById(tId).classList.add('active'); document.getElementById(mId).classList.add('active');
-        if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-    }
-
-    function clickAnvil(e) {
-        gold += 10000000; if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-        showPop("tab-clicker", "+10M", 100, 100); updateUI();
-    }
-
-    setInterval(function() {
-        for (var id in data) {
-            var wb = data[id]; wb.progress += wb.speed;
-            var worker = document.getElementById("worker" + id);
-            if (wb.progress <= 50) {
-                var t = 85 - (wb.progress * 2) * 0.7; if (worker) worker.style.top = t + "px";
-            } else {
-                var t = 15 + ((wb.progress - 50) * 2) * 0.7; if (worker) worker.style.top = t + "px";
-            }
-            if (wb.progress >= 100) {
-                wb.progress = 0; gold += wb.income;
-                if (document.getElementById('tab-forge').classList.contains('active')) { showPop("wb" + id + "-zone", "+" + format(wb.income), 25, 95); }
-                updateUI();
-            }
-            var pEl = document.getElementById("wb" + id + "-progress"); if (pEl) pEl.style.width = wb.progress + "%";
-        }
-    }, 60);
-
-    window.onload = function() { updateWbUI(1); updateWbUI(2); updateUI(); };
+    function saveGame() { localStorage.setItem("vip_gld_v2", gold.toString()); localStorage.setItem("vip_dat_v2", JSON.stringify(data)); }
+    function loadGame() { var savedGold = localStorage.getItem("vip_gld_v2"); var savedData = localStorage.getItem("vip_dat_v2"); if (savedGold !== null && !isNaN(parseFloat(savedGold))) gold = parseFloat(savedGold); if (savedData !== null) data = JSON.parse(savedData); }
+    function showPop(id, txt, x, y) { var el = document.getElementById(id); if (!el) return; var div = document.createElement("div"); div.className = "income-pop"; div.innerText = txt; div.style.left = x + "px"; div.style.top = y + "px"; el.appendChild(div); setTimeout(function() { div.remove(); }, 500); }
+    function updateWbUI(id) { var wb = data[id]; var stage = Math.min(Math.floor((wb.level - 1) / 10), 2); document.getElementById("wb" + id + "-title").innerText = wpNames[id][stage]; document.getElementById("wb" + id + "-lvl").innerText = "Lvl " + wb.level; document.getElementById("wb" + id + "-income").innerText = format(wb.income); document.getElementById("wb" + id + "-cost").innerText = format(wb.cost); }
+    function updateUI() { document.getElementById("gold-display").innerText = format(gold); for (var id in data) { var btn = document.getElementById("wb" + id + "-btn"); if (btn) { if (gold >= data[id].cost) btn.classList.add("affordable"); else btn.classList.remove("affordable"); } } }
+    function upgradeWb(id) { var wb = data[id]; if (gold >= wb.cost) { gold -= wb.cost; wb.level += 1; wb.income = Math.floor(wb.income * 1.45); wb.cost = Math.floor(wb.cost * 1.55); wb.speed += 0.1; if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("medium"); updateWbUI(id); updateUI(); saveGame(); } }
+    function switchTab(tId, mId) { document.querySelectorAll(".tab-content").forEach(function(e) { e.classList.remove("active"); }); document.querySelectorAll(".menu-item").forEach(function(e) { e.classList.remove("active"); }); document.getElementById(tId).classList.add("active"); document.getElementById(mId).classList.add("active"); if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light"); }
+    function clickAnvil(e) { gold += 10000000; if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light"); showPop("tab-clicker", "+10M", 100, 100); updateUI(); saveGame(); }
+    setInterval(function() { for (var id in data) { var wb = data[id]; wb.progress += wb.speed; var worker = document.getElementById("worker" + id); if (wb.progress <= 50) { var t = 85 - (wb.progress * 2) * 0.7; if (worker) worker.style.top = t + "px"; } else { var t = 15 + ((wb.progress - 50) * 2) * 0.7; if (worker) worker.style.top = t + "px"; } if (wb.progress >= 100) { wb.progress = 0; gold += wb.income; if (document.getElementById("tab-forge").classList.contains("active")) { showPop("wb" + id + "-zone", "+" + format(wb.income), 25, 95); } updateUI(); saveGame(); } var pEl = document.getElementById("wb" + id + "-progress"); if (pEl) pEl.style.width = wb.progress + "%"; } }, 60);
+    window.onload = function() { loadGame(); updateWbUI(1); updateWbUI(2); updateUI(); };
 </script>
+</body>
+</html>
