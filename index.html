@@ -493,6 +493,297 @@ spawnExtraNPCs();
 updateUIExtended();
 drawExtended();
 // ================== КОНЕЦ ЧАСТИ 2 ==================
+    // ================== ЧАСТЬ 3: ПРЕМИУМ ГРАФИКА И UI ==================
+// ----- СТИЛИ ДЛЯ ДОРОГИХ КНОПОК -----
+const style = document.createElement('style');
+style.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap');
+    * { font-family: 'Inter', system-ui, -apple-system; }
+    .premium-panel {
+        background: linear-gradient(135deg, rgba(20,25,35,0.95) 0%, rgba(10,15,25,0.98) 100%);
+        backdrop-filter: blur(20px);
+        border-radius: 32px;
+        border: 1px solid rgba(255,215,0,0.3);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .premium-btn {
+        background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
+        border: none;
+        border-radius: 60px;
+        padding: 10px 24px;
+        font-weight: 700;
+        font-size: 14px;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 15px rgba(241,39,17,0.4);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .premium-btn:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(241,39,17,0.5); }
+    .premium-btn-secondary {
+        background: linear-gradient(135deg, #2c3e50 0%, #1a2632 100%);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,215,0,0.2);
+    }
+    .stat-card {
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(8px);
+        border-radius: 40px;
+        padding: 8px 18px;
+        border: 1px solid rgba(255,215,0,0.25);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .upgrade-grid {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 8px 4px;
+    }
+    .upgrade-card-premium {
+        background: linear-gradient(145deg, #1e2a3a, #0f1722);
+        border-radius: 28px;
+        padding: 12px 16px;
+        min-width: 110px;
+        text-align: center;
+        border: 1px solid rgba(255,215,0,0.2);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+        transition: 0.1s linear;
+        cursor: pointer;
+    }
+    .upgrade-card-premium:active { transform: scale(0.97); }
+    .gold-text { color: #f5b042; text-shadow: 0 0 5px rgba(245,176,66,0.5); }
+    .resource-icon { font-size: 20px; margin-right: 6px; vertical-align: middle; }
+`;
+document.head.appendChild(style);
+
+// ----- ЗАМЕНЯЕМ UI НА ПРЕМИУМ -----
+function upgradeToPremiumUI() {
+    const oldPanel = document.querySelector('.ui-panel');
+    if(!oldPanel) return;
+    oldPanel.style.background = 'linear-gradient(135deg, rgba(20,25,35,0.95) 0%, rgba(10,15,25,0.98) 100%)';
+    oldPanel.style.backdropFilter = 'blur(20px)';
+    oldPanel.style.borderRadius = '32px';
+    oldPanel.style.border = '1px solid rgba(255,215,0,0.3)';
+    oldPanel.style.padding = '14px 18px';
+    
+    // Все кнопки делаем премиум
+    document.querySelectorAll('button').forEach(btn => {
+        if(!btn.classList.contains('premium-btn')) {
+            btn.classList.add('premium-btn');
+            if(btn.id.includes('guild') || btn.id.includes('ship')) btn.classList.add('premium-btn-secondary');
+        }
+    });
+    document.querySelectorAll('.stat').forEach(stat => stat.classList.add('stat-card'));
+    document.querySelectorAll('.upgrade-card').forEach(card => card.classList.add('upgrade-card-premium'));
+}
+
+// ----- УЛУЧШЕННАЯ ОТРИСОВКА (тени, градиенты, блики) -----
+const premiumDraw = function() {
+    if(!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Градиентный фон
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    grad.addColorStop(0, '#1a472a');
+    grad.addColorStop(1, '#0d2a1a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Солнечные блики
+    ctx.globalAlpha = 0.15;
+    for(let i=0;i<3;i++) {
+        ctx.beginPath();
+        ctx.arc(100 + i*250, 80, 60, 0, Math.PI*2);
+        ctx.fillStyle = '#ffdd88';
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    
+    // Трава с текстурой
+    ctx.fillStyle = '#3c8c40';
+    for(let i=0;i<200;i++) {
+        ctx.fillRect(i*30, canvas.height-85, 15, 8);
+    }
+    
+    // Тени зданий
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 15;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 4;
+    
+    // Наковальня (золотая)
+    ctx.fillStyle = '#8b5a2b';
+    ctx.fillRect(canvas.width/2-55, canvas.height/2-55, 110, 90);
+    ctx.fillStyle = '#d4a373';
+    ctx.fillRect(canvas.width/2-45, canvas.height/2-45, 90, 70);
+    ctx.fillStyle = '#f5b042';
+    ctx.font = "bold 40px system-ui";
+    ctx.fillText("🔨", canvas.width/2-25, canvas.height/2+10);
+    
+    // Прилавок с золотом
+    ctx.fillStyle = '#b87c4f';
+    ctx.fillRect(canvas.width-160, canvas.height-170, 130, 80);
+    ctx.fillStyle = '#ffd966';
+    ctx.font = "28px system-ui";
+    ctx.fillText("🏪", canvas.width-125, canvas.height-115);
+    
+    // Лесопилка с анимацией
+    if(lumberjacks > 0) {
+        ctx.fillStyle = '#6b4c3b';
+        ctx.fillRect(40, 25, 90, 75);
+        ctx.fillStyle = '#c9a87b';
+        ctx.fillRect(55, 40, 60, 45);
+        ctx.fillStyle = '#f0c674';
+        ctx.font = "26px system-ui";
+        ctx.fillText("🪵", 80, 80);
+    }
+    
+    // Алхимическая башня с сиянием
+    if(alchemyLevel > 0) {
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#9b59b6';
+        ctx.fillRect(canvas.width-130, 35, 70, 100);
+        ctx.fillStyle = '#e0b0ff';
+        ctx.fillRect(canvas.width-120, 50, 50, 70);
+        ctx.fillStyle = '#f1c40f';
+        ctx.font = "28px system-ui";
+        ctx.fillText("🧪", canvas.width-100, 95);
+    }
+    
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    
+    // Кузнецы (с бликами)
+    for(let i=0; i<blacksmiths; i++) {
+        let x = 120 + (i%6)*50;
+        let y = canvas.height-90 - Math.floor(i/6)*70;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = '#e6b87e';
+        ctx.beginPath();
+        ctx.ellipse(x, y, 18, 20, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#2c1e0e';
+        ctx.font = "24px system-ui";
+        ctx.fillText("👨‍🏭", x-14, y-12);
+        // Искры
+        if(Math.random()<0.1) {
+            ctx.fillStyle = '#ffaa44';
+            ctx.beginPath();
+            ctx.arc(x+5, y-8, 3, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
+    
+    // Лесорубы с топорами
+    for(let n of extraNPCs) {
+        if(n.type !== 'lumberjack') continue;
+        ctx.fillStyle = '#7da06e';
+        ctx.beginPath();
+        ctx.ellipse(n.x, n.y, 15, 18, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = "22px system-ui";
+        ctx.fillText("🪓", n.x-10, n.y-8);
+    }
+    
+    // Монстры с красной подсветкой
+    for(let m of monsters) {
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#ff0000';
+        ctx.fillStyle = '#8b1a1a';
+        ctx.beginPath();
+        ctx.ellipse(m.x, m.y, 20, 22, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = "28px system-ui";
+        ctx.fillText("👾", m.x-14, m.y-6);
+        ctx.fillStyle = 'white';
+        ctx.font = "bold 12px monospace";
+        ctx.fillText(`${Math.floor(m.hp)}/${m.maxHp}`, m.x-18, m.y+16);
+    }
+    
+    // Корабль с золотым контуром
+    if(ships.length > 0) {
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = '#2c5e2e';
+        ctx.fillRect(canvas.width-110, 45, 85, 45);
+        ctx.fillStyle = '#f0c674';
+        ctx.font = "28px system-ui";
+        ctx.fillText("🚢", canvas.width-80, 85);
+        ctx.fillStyle = '#ffd966';
+        ctx.font = "bold 12px monospace";
+        ctx.fillText(`💰${ships[0].price}`, canvas.width-70, 70);
+    }
+    ctx.shadowBlur = 0;
+    
+    // Частицы золота
+    if(Math.random()<0.3) {
+        ctx.fillStyle = '#f5b042';
+        ctx.beginPath();
+        ctx.arc(50 + Math.random()*canvas.width, canvas.height-50, 3, 0, Math.PI*2);
+        ctx.fill();
+    }
+};
+
+// ----- АНИМАЦИЯ ПАРЯЩИХ МОНЕТ -----
+let floatingCoins = [];
+setInterval(() => {
+    if(Math.random()<0.4 && weapons > 0) {
+        floatingCoins.push({ x: canvas.width-130, y: canvas.height-130, life: 1 });
+    }
+    for(let i=0;i<floatingCoins.length;i++) {
+        floatingCoins[i].y -= 2;
+        floatingCoins[i].life -= 0.02;
+        if(floatingCoins[i].life <= 0) floatingCoins.splice(i,1);
+    }
+}, 500);
+
+const originalDrawExt = drawExtended;
+drawExtended = function() {
+    premiumDraw();
+    for(let c of floatingCoins) {
+        ctx.globalAlpha = c.life;
+        ctx.fillStyle = '#f5b042';
+        ctx.font = "20px system-ui";
+        ctx.fillText("💰", c.x, c.y);
+        ctx.globalAlpha = 1;
+    }
+};
+
+// ----- ОБНОВЛЯЕМ UI С ПРЕМИУМ ЭФФЕКТАМИ -----
+setTimeout(() => {
+    upgradeToPremiumUI();
+    updateUIExtended();
+}, 100);
+
+// Добавляем эффект при продаже
+const originalSell = sellAll;
+sellAll = function() {
+    if(weapons > 0) {
+        let price = 12 + Math.floor(reputation / 10);
+        let total = weapons * price;
+        gold += total;
+        weapons = 0;
+        // Визуальный взрыв монет
+        for(let i=0;i<20;i++) {
+            floatingCoins.push({ x: canvas.width-130, y: canvas.height-130, life: 0.8 });
+        }
+        tg.HapticFeedback.notificationOccurred('success');
+        updateUIExtended();
+        drawExtended();
+    }
+};
+
+// Перехватываем обновление интерфейса для премиум кнопок
+const oldUIext = updateUIExtended;
+updateUIExtended = function() {
+    oldUIext();
+    upgradeToPremiumUI();
+};
+// ================== КОНЕЦ ЧАСТИ 3 ==================
 </script>
 </body>
 </html>
