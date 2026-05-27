@@ -72,7 +72,11 @@
 </div>
 <script>
     var tg = window.Telegram.WebApp; if (tg) { tg.expand(); }
-    function format(n) { if (n >= 1e12) return (n / 1e12).toFixed(2) + 'T'; if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; return n.toFixed(0); }
+    function format(n) { if (isNaN(n) || n === null) return "0"; if (n >= 1e12) return (n / 1e12).toFixed(2) + 'T'; if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; return n.toFixed(0); }
+    
+    // ПРИНУДИТЕЛЬНЫЙ СБРОС КРИВОЙ ПАМЯТИ
+    localStorage.clear();
+    
     var gold = 10000000000;
     var data = {
         1: { level: 1, income: 100000000, cost: 500000000, progress: 0, speed: 1.5 },
@@ -144,5 +148,3 @@
 
     window.onload = function() { updateWbUI(1); updateWbUI(2); updateUI(); };
 </script>
-</body>
-</html>
