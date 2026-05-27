@@ -1,156 +1,368 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Viper Forge</title>
-    <script src="https://telegram.org"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Idle Weapon Shop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: #0a0b10; margin: 0; padding: 0; display: flex; justify-content: center; height: 100vh; color: #fff; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
-        .screen { width: 100%; max-width: 410px; height: 100vh; background: #14151f; display: flex; flex-direction: column; overflow: hidden; border: 2px solid #222533; box-sizing: border-box; }
-        .top-bar { background: #0a0b10; padding: 15px; display: flex; flex-direction: column; align-items: center; border-bottom: 3px solid #3d2f27; }
-        .gold-amount { font-size: 34px; font-weight: 900; color: #ffb700; text-shadow: 0 0 20px rgba(255,183,0,0.4); }
-        .forge-view { flex: 1; background: #261e19; padding: 10px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; background-image: radial-gradient(rgba(28,35,51,0.4) 1px, transparent 0); background-size: 24px 24px; }
-        .tab-content { display: none; flex-direction: column; gap: 12px; height: 100%; }
-        .tab-content.active { display: flex; }
-        .workbench-zone { background: rgba(33,24,20,0.85); border: 2px solid #543d31; border-radius: 18px; height: 140px; position: relative; padding: 12px; box-sizing: border-box; overflow: hidden; }
-        .forge-object { position: absolute; font-size: 26px; }
-        .obj-anvil { top: 12px; left: 22px; } .obj-chest { bottom: 12px; left: 22px; }   
-        .wb-info-block { position: absolute; right: 12px; top: 10px; bottom: 10px; width: 210px; display: flex; flex-direction: column; justify-content: space-between; background: rgba(14,11,9,0.9); padding: 8px 12px; border-radius: 14px; }
-        .wb-meta { display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; }
-        .progress-box { background: #0f0c0a; border-radius: 6px; height: 8px; overflow: hidden; margin: 4px 0; }
-        .progress-fill { background: #00ff66; width: 0%; height: 100%; }
-        .mini-up-btn { background: #3d2f27; color: #fff; border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 7px 0; width: 100%; font-size: 12px; font-weight: 800; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        .mini-up-btn.affordable { background: #ffb700 !important; color: #0a0b10 !important; }
-        .char-worker { position: absolute; font-size: 30px; left: 19px; top: 12px; transition: top 0.08s linear; }
-        .clicker-tab-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 15px; }
-        .big-anvil { font-size: 95px; width: 190px; height: 190px; background: rgba(0,243,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .upgrade-card { background: rgba(33,24,20,0.85); border: 2px solid #543d31; border-radius: 18px; padding: 14px; width: 85%; display: flex; flex-direction: column; gap: 10px; }
-        .income-pop { position: absolute; color: #00ff66; font-weight: 900; font-size: 19px; animation: popUp 0.45s ease-out forwards; pointer-events: none; }
-        @keyframes popUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-40px); opacity: 0; } }
-        .bottom-menu { background: #0a0b10; height: 75px; display: flex; justify-content: space-around; align-items: center; border-top: 3px solid #3d2f27; }
-        .menu-item { display: flex; flex-direction: column; align-items: center; font-size: 20px; opacity: 0.4; cursor: pointer; }
-        .menu-item.active { opacity: 1; color: #00f3ff; }
-        .reset-btn { background: none; border: none; color: #ff3366; font-size: 10px; text-decoration: underline; opacity: 0.4; cursor: pointer; }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            margin: 0;
+            padding: 16px;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--tg-theme-bg-color, #17212b);
+            color: var(--tg-theme-text-color, #ffffff);
+        }
+        .card {
+            background: var(--tg-theme-secondary-bg-color, #1f2a36);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        h1, h2, h3 {
+            margin: 0 0 8px 0;
+        }
+        .gold {
+            color: #f5b042;
+            font-weight: bold;
+        }
+        .ore {
+            color: #b0a37c;
+        }
+        .gem {
+            color: #5dade2;
+        }
+        button {
+            background: var(--tg-theme-button-color, #2d7a4b);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.1s;
+            width: 100%;
+            margin-top: 8px;
+        }
+        button:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+        .upgrade-btn {
+            background: var(--tg-theme-secondary-bg-color, #2c3e50);
+            border: 1px solid var(--tg-theme-hint-color, #5e7a93);
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .progress-bar {
+            background: #2c3e50;
+            border-radius: 20px;
+            height: 8px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        .progress-fill {
+            background: #f5b042;
+            width: 0%;
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .center {
+            text-align: center;
+        }
+        .icon {
+            font-size: 24px;
+        }
     </style>
 </head>
 <body>
-<div class="screen">
-    <div class="top-bar">
-        <div class="gold-amount">💰 <span id="gold-display">10.00B</span></div>
-        <button class="reset-btn" id="res-btn">Очистить кэш игры</button>
-    </div>
-    <div class="forge-view">
-        <div id="tab-forge" class="tab-content active">
-            <div class="workbench-zone" id="wb1-zone">
-                <div class="forge-object obj-anvil">⚒️</div><div class="forge-object obj-chest">📦</div><div class="char-worker" id="worker1">🧑‍🏭</div>
-                <div class="wb-info-block">
-                    <div class="wb-meta"><span id="wb1-title">Нож</span><span id="wb1-lvl">Lvl 1</span></div>
-                    <div style="color:#00ff66;">+<span id="wb1-income">100M</span> 💰</div>
-                    <div class="progress-box"><div class="progress-fill" id="wb1-progress"></div></div>
-                    <button class="mini-up-btn" id="wb1-btn">Апгрейд: <span id="wb1-cost">500M</span></button>
-                </div>
-            </div>
-            <div class="workbench-zone" id="wb2-zone">
-                <div class="forge-object obj-anvil">⚒️</div><div class="forge-object obj-chest">📦</div><div class="char-worker" id="worker2">🧝‍♂️</div>
-                <div class="wb-info-block">
-                    <div class="wb-meta"><span id="wb2-title">Топор</span><span id="wb2-lvl">Lvl 1</span></div>
-                    <div style="color:#00ff66;">+<span id="wb2-income">800M</span> 💰</div>
-                    <div class="progress-box"><div class="progress-fill" id="wb2-progress"></div></div>
-                    <button class="mini-up-btn" id="wb2-btn">Апгрейд: <span id="wb2-cost">2.5B</span></button>
-                </div>
-            </div>
-            <div class="workbench-zone" id="wb3-zone">
-                <div class="forge-object obj-anvil">⚒️</div><div class="forge-object obj-chest">📦</div><div class="char-worker" id="worker3">🧙‍♂️</div>
-                <div class="wb-info-block">
-                    <div class="wb-meta"><span id="wb3-title">Посох</span><span id="wb3-lvl">Lvl 1</span></div>
-                    <div style="color:#00ff66;">+<span id="wb3-income">5.0B</span> 💰</div>
-                    <div class="progress-box"><div class="progress-fill" id="wb3-progress"></div></div>
-                    <button class="mini-up-btn" id="wb3-btn">Апгрейд: <span id="wb3-cost">15.0B</span></button>
-                </div>
-            </div>
-            <div class="workbench-zone" id="wb4-zone">
-                <div class="forge-object obj-anvil">⚒️</div><div class="forge-object obj-chest">📦</div><div class="char-worker" id="worker4">🧛</div>
-                <div class="wb-info-block">
-                    <div class="wb-meta"><span id="wb4-title">Клинок</span><span id="wb4-lvl">Lvl 1</span></div>
-                    <div style="color:#00ff66;">+<span id="wb4-income">25.0B</span> 💰</div>
-                    <div class="progress-box"><div class="progress-fill" id="wb4-progress"></div></div>
-                    <button class="mini-up-btn" id="wb4-btn">Апгрейд: <span id="wb4-cost">80.0B</span></button>
-                </div>
-            </div>
+
+<div id="app">
+    <div class="card">
+        <div class="flex">
+            <span class="icon">⚔️</span>
+            <h2>Idle Weapon Shop</h2>
+            <span class="icon">🛠️</span>
         </div>
-        <div id="tab-clicker" class="tab-content">
-            <div class="clicker-tab-zone">
-                <div class="big-anvil" id="tap-anvil">🔥🔨</div>
-                <div class="upgrade-card">
-                    <div class="wb-meta"><span>🛠️ Молот</span><span id="click-lvl">Lvl 1</span></div>
-                    <div style="color:#ffb700;">Тап: <span id="click-power">+10.0M 💰</span></div>
-                    <button class="mini-up-btn" id="click-up-btn">Апгрейд тапа: <span id="click-cost">1.0B</span></button>
-                </div>
-            </div>
+        <div class="flex" style="margin-top: 12px;">
+            <div><span class="gold">💰</span> <span id="gold">0</span></div>
+            <div><span class="ore">🪨</span> <span id="ore">0</span></div>
+            <div><span class="gem">💎</span> <span id="gems">0</span></div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="prestige-progress"></div>
+        </div>
+        <div class="flex" style="font-size: 14px;">
+            <span>⚡ <span id="production">0</span>/мин</span>
+            <span>👨‍🏭 <span id="blacksmiths">1</span></span>
+            <span>🔥 До престижа: <span id="prestige-percent">0</span>%</span>
         </div>
     </div>
-    <div class="bottom-menu">
-        <div class="menu-item active" id="m-forge">🧱<span>Кузня</span></div>
-        <div class="menu-item" id="m-click">🔨<span>Клик</span></div>
+
+    <div class="grid-2">
+        <div class="card center">
+            <div class="icon">🔨</div>
+            <div><strong>Ковать меч</strong></div>
+            <div id="craft-cost">10🪨</div>
+            <button id="craftBtn">Ковать</button>
+        </div>
+        <div class="card center">
+            <div class="icon">💰</div>
+            <div><strong>Продать всё</strong></div>
+            <div id="sell-value">+0🪙</div>
+            <button id="sellBtn">Продать</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🏪 Улучшения</h3>
+        <div class="flex">
+            <span>⚡ Кузнецы (+1/мин)</span>
+            <span id="blacksmithCost" class="gold">50🪙</span>
+            <button id="buyBlacksmith" class="upgrade-btn" style="width: auto;">Нанять</button>
+        </div>
+        <div class="flex">
+            <span>💪 Сила продаж (+5% цены)</span>
+            <span id="profitCost" class="gold">100🪙</span>
+            <button id="buyProfit" class="upgrade-btn" style="width: auto;">Купить</button>
+        </div>
+        <div class="flex">
+            <span>⛏️ Шахта (+1 руда/мин)</span>
+            <span id="mineCost" class="gold">80🪙</span>
+            <button id="buyMine" class="upgrade-btn" style="width: auto;">Улучшить</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🏆 Лидеры (ваш прогресс)</h3>
+        <div id="leaderboard">Загрузка...</div>
     </div>
 </div>
+
 <script>
-    var tg = window.Telegram.WebApp; if (tg) { tg.expand(); }
-    function format(n) { if (isNaN(n) || n === null) return "0"; if (n >= 1e12) return (n / 1e12).toFixed(2) + "T"; if (n >= 1e9) return (n / 1e9).toFixed(2) + "B"; if (n >= 1e6) return (n / 1e6).toFixed(1) + "M"; return n.toFixed(0); }
-    
-    if (localStorage.getItem("v_clr_final_v5") === null) { localStorage.clear(); localStorage.setItem("v_clr_final_v5", "yes"); }
+    // ---------- ИГРОВАЯ ЛОГИКА ----------
+    let tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
 
-    var gold = 10000000000; var clickLvl = 1; var clickPower = 10000000; var clickCost = 1000000000;
-    var data = {
-        1: { level: 1, income: 100000000, cost: 500000000, progress: 0, speed: 1.6 },
-        2: { level: 1, income: 800000000, cost: 2500000000, progress: 0, speed: 1.1 },
-        3: { level: 1, income: 5000000000, cost: 15000000000, progress: 0, speed: 0.7 },
-        4: { level: 1, income: 25000000000, cost: 80000000000, progress: 0, speed: 0.4 }
-    };
-    var wpNames = {
-        1: ["Ржавый Нож", "Острый Меч ⚔️", "Палаш Тьмы", "Эскалибур"],
-        2: ["Топорик", "Боевая Секира 🪓", "Разрушитель", "Армагеддон"],
-        3: ["Деревянная палочка", "Посох Архимага", "Скипетр Хаоса", "Божественный Посох"],
-        4: ["Кинжал Крови", "Лезвие Ночи 🩸", "Теневой Клинок", "Убийца Драконов"]
-    };
+    // Стартовые значения
+    let gold = 100;
+    let ore = 20;
+    let gems = 0;
+    let blacksmiths = 1;     // 1 меч/мин за кузнеца
+    let profitLevel = 0;     // +5% за уровень
+    let mineLevel = 0;       // +1 руда/мин
+    let prestigeCount = 0;
 
-    function saveGame() { localStorage.setItem("v_g5", gold.toString()); localStorage.setItem("v_cl5", clickLvl.toString()); localStorage.setItem("v_cp5", clickPower.toString()); localStorage.setItem("v_cc5", clickCost.toString()); localStorage.setItem("v_d5", JSON.stringify(data)); }
-    function loadGame() { var sg = localStorage.getItem("v_g5"); var scl = localStorage.getItem("v_clr5"); var scp = localStorage.getItem("v_cp5"); var scc = localStorage.getItem("v_cc5"); var sd = localStorage.getItem("v_d5"); if (sg !== null && !isNaN(parseFloat(sg)) && parseFloat(sg) > 0) gold = parseFloat(sg); if (scl !== null) clickLvl = parseInt(scl); if (scp !== null) clickPower = parseFloat(scp); if (scc !== null) clickCost = parseFloat(scc); if (sd !== null) data = JSON.parse(sd); }
-    function showPop(id, txt, x, y) { var el = document.getElementById(id); if (!el) return; var div = document.createElement("div"); div.className = "income-pop"; div.innerText = txt; div.style.left = x + "px"; div.style.top = y + "px"; el.appendChild(div); setTimeout(function() { div.remove(); }, 450); }
-    function updateWbUI(id) { var wb = data[id]; var stage = Math.min(Math.floor((wb.level - 1) / 10), 3); document.getElementById("wb" + id + "-title").innerText = wpNames[id][stage]; document.getElementById("wb" + id + "-lvl").innerText = "Lvl " + wb.level; document.getElementById("wb" + id + "-income").innerText = format(wb.income); document.getElementById("wb" + id + "-cost").innerText = format(wb.cost); }
-    
-    function updateUI() {
-        document.getElementById("gold-display").innerText = format(gold); document.getElementById("click-lvl").innerText = "Lvl " + clickLvl; document.getElementById("click-power").innerText = "+" + format(clickPower) + " 💰"; document.getElementById("click-cost").innerText = format(clickCost);
-        for (var id in data) { var btn = document.getElementById("wb" + id + "-btn"); if (btn) { if (gold >= data[id].cost) btn.classList.add("affordable"); else btn.classList.remove("affordable"); } }
-        var clkBtn = document.getElementById("click-up-btn"); if (clkBtn) { if (gold >= clickCost) clkBtn.classList.add("affordable"); else clkBtn.classList.remove("affordable"); }
+    const BASE_SWORD_PRICE = 15;
+    const ORE_PER_SWORD = 10;
+    const TIME_TICK = 2000;   // 2 секунды тик (для удобства теста)
+    let lastUpdate = Date.now();
+
+    // Загрузка из localStorage (оффлайн-прогресс)
+    function loadGame() {
+        let saved = localStorage.getItem('weaponShop');
+        if (saved) {
+            try {
+                let data = JSON.parse(saved);
+                let now = Date.now();
+                let minutesOffline = (now - data.lastSave) / 1000 / 60;
+                if (minutesOffline > 0 && minutesOffline < 480) { // до 8 часов
+                    let oreGain = (data.mineLevel + 1) * minutesOffline;
+                    let goldGain = (data.blacksmiths * minutesOffline) * (BASE_SWORD_PRICE * (1 + data.profitLevel * 0.05));
+                    gold = data.gold + Math.floor(goldGain);
+                    ore = data.ore + Math.floor(oreGain);
+                    gems = data.gems;
+                    blacksmiths = data.blacksmiths;
+                    profitLevel = data.profitLevel;
+                    mineLevel = data.mineLevel;
+                    prestigeCount = data.prestigeCount || 0;
+                } else {
+                    gold = data.gold;
+                    ore = data.ore;
+                    gems = data.gems;
+                    blacksmiths = data.blacksmiths;
+                    profitLevel = data.profitLevel;
+                    mineLevel = data.mineLevel;
+                    prestigeCount = data.prestigeCount || 0;
+                }
+            } catch(e) { console.warn(e); }
+        }
+        saveGame();
+    }
+    function saveGame() {
+        let data = {
+            gold, ore, gems, blacksmiths, profitLevel, mineLevel, prestigeCount,
+            lastSave: Date.now()
+        };
+        localStorage.setItem('weaponShop', JSON.stringify(data));
     }
 
-    function upgradeWb(id) { var wb = data[id]; if (gold >= wb.cost) { gold -= wb.cost; wb.level += 1; wb.income = Math.floor(wb.income * 1.48); wb.cost = Math.floor(wb.cost * 1.58); wb.speed += 0.08; if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("medium"); updateWbUI(id); updateUI(); saveGame(); } }
-    function upgradeClick() { if (gold >= clickCost) { gold -= clickCost; clickLvl += 1; clickPower = Math.floor(clickPower * 1.6); clickCost = Math.floor(clickCost * 1.7); if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("medium"); updateUI(); saveGame(); } }
-    function switchTab(tId, mId) { document.querySelectorAll(".tab-content").forEach(function(e) { e.classList.remove("active"); }); document.querySelectorAll(".menu-item").forEach(function(e) { e.classList.remove("active"); }); document.getElementById(tId).classList.add("active"); document.getElementById(mId).classList.add("active"); if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light"); }
-    function clickAnvil(e) { gold += clickPower; if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light"); showPop("tab-clicker", "+" + format(clickPower), 100, 100); updateUI(); saveGame(); }
+    // Динамические цены
+    function blacksmithCost() { return 50 + blacksmiths * 20; }
+    function profitCost() { return 100 + profitLevel * 50; }
+    function mineCost() { return 80 + mineLevel * 40; }
 
-    setInterval(function() {
-        for (var id in data) {
-            var wb = data[id]; wb.progress += wb.speed; var worker = document.getElementById("worker" + id);
-            if (wb.progress <= 50) { var t = 85 - (wb.progress * 2) * 0.7; if (worker) { worker.style.top = t + "px"; worker.style.transform = "scaleX(1)"; } } 
-            else { var t = 15 + ((wb.progress - 50) * 2) * 0.7; if (worker) { worker.style.top = t + "px"; worker.style.transform = "scaleX(-1)"; } }
-            if (wb.progress >= 100) { wb.progress = 0; gold += wb.income; if (document.getElementById("tab-forge").classList.contains("active")) { showPop("wb" + id + "-zone", "+" + format(wb.income), 25, 90); } updateUI(); saveGame(); }
-            var pEl = document.getElementById("wb" + id + "-progress"); if (pEl) pEl.style.width = wb.progress + "%";
+    // Производство в минуту
+    function getOrePerMin() { return mineLevel + 1; }
+    function getSwordsPerMin() { return blacksmiths; }
+    function getSwordPrice() { return Math.floor(BASE_SWORD_PRICE * (1 + profitLevel * 0.05)); }
+    function getGoldPerMin() { return getSwordsPerMin() * getSwordPrice(); }
+
+    // Крафт меча
+    function craftSword() {
+        let costOre = ORE_PER_SWORD;
+        if (ore >= costOre) {
+            ore -= costOre;
+            // автоматически добавляем меч на склад (упрощённо - сразу даём золото при продаже поштучно, но здесь просто увеличим склад)
+            // для простоты: мечи храним неявно, продажа через кнопку "Продать всё"
+            if (!window.inventory) window.inventory = 0;
+            window.inventory = (window.inventory || 0) + 1;
+            tg.HapticFeedback.impactOccurred('light');
+            updateUI();
+            saveGame();
+        } else {
+            tg.showPopup({ title: "Не хватает", message: `Нужно ${costOre} руды` });
         }
-    }, 60);
+    }
+    function sellAll() {
+        let inv = window.inventory || 0;
+        if (inv === 0) return;
+        let priceEach = getSwordPrice();
+        let total = inv * priceEach;
+        gold += total;
+        window.inventory = 0;
+        tg.HapticFeedback.notificationOccurred('success');
+        updateUI();
+        saveGame();
+    }
+    function buyBlacksmith() {
+        let cost = blacksmithCost();
+        if (gold >= cost) {
+            gold -= cost;
+            blacksmiths++;
+            updateUI();
+            saveGame();
+        }
+    }
+    function buyProfit() {
+        let cost = profitCost();
+        if (gold >= cost) {
+            gold -= cost;
+            profitLevel++;
+            updateUI();
+            saveGame();
+        }
+    }
+    function buyMine() {
+        let cost = mineCost();
+        if (gold >= cost) {
+            gold -= cost;
+            mineLevel++;
+            updateUI();
+            saveGame();
+        }
+    }
 
-    document.getElementById("m-forge").addEventListener("click", function() { switchTab("tab-forge", "m-forge"); });
-    document.getElementById("m-click").addEventListener("click", function() { switchTab("tab-clicker", "m-click"); });
-    document.getElementById("tap-anvil").addEventListener("click", function(e) { e.preventDefault(); clickAnvil(e); });
-    document.getElementById("click-up-btn").addEventListener("click", function(e) { e.preventDefault(); upgradeClick(); });
-    document.getElementById("wb1-btn").addEventListener("click", function(e) { e.preventDefault(); upgradeWb(1); });
-    document.getElementById("wb2-btn").addEventListener("click", function(e) { e.preventDefault(); upgradeWb(2); });
-    document.getElementById("wb3-btn").addEventListener("click", function(e) { e.preventDefault(); upgradeWb(3); });
-    document.getElementById("wb4-btn").addEventListener("click", function(e) { e.preventDefault(); upgradeWb(4); });
-    document.getElementById("res-btn").addEventListener("click", function() { if(confirm("Сбросить?")) { localStorage.clear(); location.reload(); } });
-    window.onload = function() { loadGame(); updateWbUI(1); updateWbUI(2); updateWbUI(3); updateWbUI(4); updateUI(); };
+    // Оффлайн-тик (добыча руды и ковка в фоне)
+    function productionTick() {
+        let now = Date.now();
+        let diffMinutes = (now - lastUpdate) / 1000 / 60;
+        if (diffMinutes > 0.1) {
+            let oreGain = getOrePerMin() * diffMinutes;
+            ore += oreGain;
+            let swordsGained = getSwordsPerMin() * diffMinutes;
+            if (!window.inventory) window.inventory = 0;
+            window.inventory += swordsGained;
+            lastUpdate = now;
+            updateUI();
+            saveGame();
+        }
+    }
+    setInterval(() => productionTick(), TIME_TICK);
+
+    // UI обновление
+    function updateUI() {
+        document.getElementById('gold').innerText = Math.floor(gold);
+        document.getElementById('ore').innerText = Math.floor(ore);
+        document.getElementById('gems').innerText = gems;
+        document.getElementById('blacksmiths').innerText = blacksmiths;
+        document.getElementById('production').innerText = getGoldPerMin();
+        document.getElementById('craft-cost').innerHTML = `${ORE_PER_SWORD}🪨`;
+        let sellTotal = (window.inventory || 0) * getSwordPrice();
+        document.getElementById('sell-value').innerHTML = `+${Math.floor(sellTotal)}🪙`;
+
+        document.getElementById('blacksmithCost').innerHTML = `${Math.floor(blacksmithCost())}🪙`;
+        document.getElementById('profitCost').innerHTML = `${Math.floor(profitCost())}🪙`;
+        document.getElementById('mineCost').innerHTML = `${Math.floor(mineCost())}🪙`;
+
+        let totalEarned = gold;
+        let neededForPrestige = 50000;
+        let percent = Math.min(100, Math.floor((totalEarned / neededForPrestige) * 100));
+        document.getElementById('prestige-percent').innerText = percent;
+        document.getElementById('prestige-progress').style.width = percent + '%';
+
+        let topPlayers = [
+            { name: "Игрок_1", gold: 124000 },
+            { name: "Кузнец228", gold: 89000 },
+            { name: "Ты", gold: Math.floor(gold) }
+        ];
+        let leaderHtml = topPlayers.map(p => `<div>${p.name}: ${Math.floor(p.gold)}🪙</div>`).join('');
+        document.getElementById('leaderboard').innerHTML = leaderHtml;
+    }
+
+    // Привязка кнопок
+    document.getElementById('craftBtn').onclick = () => { craftSword(); updateUI(); };
+    document.getElementById('sellBtn').onclick = () => { sellAll(); updateUI(); };
+    document.getElementById('buyBlacksmith').onclick = () => { buyBlacksmith(); updateUI(); };
+    document.getElementById('buyProfit').onclick = () => { buyProfit(); updateUI(); };
+    document.getElementById('buyMine').onclick = () => { buyMine(); updateUI(); };
+
+    // Первоначальный запуск
+    loadGame();
+    if (!window.inventory) window.inventory = 0;
+    lastUpdate = Date.now();
+    updateUI();
+
+    // Telegram MainButton для престижа (опционально)
+    tg.MainButton.setText("🌟 Перерождение (50k золота)");
+    tg.MainButton.show();
+    tg.MainButton.onClick(() => {
+        if (gold >= 50000) {
+            gold -= 50000;
+            prestigeCount++;
+            // бонус престижа: +1 кузнец, +1 шахта, +2 кристалла
+            blacksmiths += 1;
+            mineLevel += 1;
+            gems += 2;
+            updateUI();
+            saveGame();
+            tg.showPopup({ title: "Перерождение!", message: `Ты переродился ${prestigeCount} раз` });
+        } else {
+            tg.showPopup({ title: "Не хватает", message: "Нужно 50 000 золота для перерождения" });
+        }
+    });
 </script>
 </body>
 </html>
