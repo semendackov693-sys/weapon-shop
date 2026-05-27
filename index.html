@@ -2,367 +2,359 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Idle Weapon Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Idle Weapon Shop 2D</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
-            box-sizing: border-box;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation; /* отключает зумы */
         }
         body {
             margin: 0;
-            padding: 16px;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: var(--tg-theme-bg-color, #17212b);
-            color: var(--tg-theme-text-color, #ffffff);
-        }
-        .card {
-            background: var(--tg-theme-secondary-bg-color, #1f2a36);
-            border-radius: 20px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        .flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        h1, h2, h3 {
-            margin: 0 0 8px 0;
-        }
-        .gold {
-            color: #f5b042;
-            font-weight: bold;
-        }
-        .ore {
-            color: #b0a37c;
-        }
-        .gem {
-            color: #5dade2;
-        }
-        button {
-            background: var(--tg-theme-button-color, #2d7a4b);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            border: none;
-            padding: 12px 20px;
-            border-radius: 40px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.1s;
-            width: 100%;
-            margin-top: 8px;
-        }
-        button:active {
-            transform: scale(0.97);
-            opacity: 0.9;
-        }
-        .upgrade-btn {
-            background: var(--tg-theme-secondary-bg-color, #2c3e50);
-            border: 1px solid var(--tg-theme-hint-color, #5e7a93);
-        }
-        .stat-value {
-            font-size: 20px;
-            font-weight: bold;
-        }
-        .progress-bar {
-            background: #2c3e50;
-            border-radius: 20px;
-            height: 8px;
+            background: #1a2a1a;
             overflow: hidden;
-            margin: 12px 0;
+            font-family: system-ui;
+            color: white;
         }
-        .progress-fill {
+        /* Контейнер игры */
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: block;
+            background: #2d3e2d;
+        }
+        /* UI поверх Canvas */
+        .ui-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(12px);
+            padding: 12px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 8px;
+            z-index: 10;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: none;
+        }
+        .ui-panel button {
+            pointer-events: auto;
             background: #f5b042;
-            width: 0%;
-            height: 100%;
-            transition: width 0.3s;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-weight: bold;
         }
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+        .stat {
+            background: #000000aa;
+            padding: 4px 10px;
+            border-radius: 20px;
         }
-        .center {
+        .upgrade-bar {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+        .upgrade-card {
+            background: #2c3e2c;
+            padding: 4px 8px;
+            border-radius: 16px;
             text-align: center;
+            pointer-events: auto;
+            cursor: pointer;
         }
-        .icon {
-            font-size: 24px;
+        @media (max-width: 600px) {
+            .stat { font-size: 10px; }
+            .upgrade-card { font-size: 10px; }
         }
     </style>
 </head>
 <body>
-
-<div id="app">
-    <div class="card">
-        <div class="flex">
-            <span class="icon">⚔️</span>
-            <h2>Idle Weapon Shop</h2>
-            <span class="icon">🛠️</span>
-        </div>
-        <div class="flex" style="margin-top: 12px;">
-            <div><span class="gold">💰</span> <span id="gold">0</span></div>
-            <div><span class="ore">🪨</span> <span id="ore">0</span></div>
-            <div><span class="gem">💎</span> <span id="gems">0</span></div>
-        </div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="prestige-progress"></div>
-        </div>
-        <div class="flex" style="font-size: 14px;">
-            <span>⚡ <span id="production">0</span>/мин</span>
-            <span>👨‍🏭 <span id="blacksmiths">1</span></span>
-            <span>🔥 До престижа: <span id="prestige-percent">0</span>%</span>
-        </div>
+<div class="game-container">
+    <canvas id="gameCanvas" width="1000" height="800"></canvas>
+    <div class="ui-panel">
+        <div class="stat">💰 <span id="gold">0</span></div>
+        <div class="stat">🪨 <span id="ore">0</span></div>
+        <div class="stat">⚔️ <span id="weapons">0</span></div>
+        <div class="stat">👨‍🏭 <span id="blacksmiths">1</span></div>
+        <div class="stat">🏪 Покупатели: <span id="customers">1</span></div>
+        <button id="sellBtn">Продать всё</button>
     </div>
-
-    <div class="grid-2">
-        <div class="card center">
-            <div class="icon">🔨</div>
-            <div><strong>Ковать меч</strong></div>
-            <div id="craft-cost">10🪨</div>
-            <button id="craftBtn">Ковать</button>
+    <div class="ui-panel" style="bottom: 70px; background: #000000aa; flex-direction: column;">
+        <div class="upgrade-bar">
+            <div class="upgrade-card" id="buySmith">⚡ Кузнец<br><span id="smithCost">50</span>💰</div>
+            <div class="upgrade-card" id="buyCustomer">🚶 Покупатель<br><span id="custCost">80</span>💰</div>
+            <div class="upgrade-card" id="buyForge">🔥 Скорость ковки<br><span id="forgeLevel">0</span></div>
+            <div class="upgrade-card" id="buyMineUpgrade">⛏️ Шахта Lv<span id="mineLevel">0</span><br><span id="mineUpCost">100</span>💰</div>
         </div>
-        <div class="card center">
-            <div class="icon">💰</div>
-            <div><strong>Продать всё</strong></div>
-            <div id="sell-value">+0🪙</div>
-            <button id="sellBtn">Продать</button>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>🏪 Улучшения</h3>
-        <div class="flex">
-            <span>⚡ Кузнецы (+1/мин)</span>
-            <span id="blacksmithCost" class="gold">50🪙</span>
-            <button id="buyBlacksmith" class="upgrade-btn" style="width: auto;">Нанять</button>
-        </div>
-        <div class="flex">
-            <span>💪 Сила продаж (+5% цены)</span>
-            <span id="profitCost" class="gold">100🪙</span>
-            <button id="buyProfit" class="upgrade-btn" style="width: auto;">Купить</button>
-        </div>
-        <div class="flex">
-            <span>⛏️ Шахта (+1 руда/мин)</span>
-            <span id="mineCost" class="gold">80🪙</span>
-            <button id="buyMine" class="upgrade-btn" style="width: auto;">Улучшить</button>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>🏆 Лидеры (ваш прогресс)</h3>
-        <div id="leaderboard">Загрузка...</div>
     </div>
 </div>
 
 <script>
-    // ---------- ИГРОВАЯ ЛОГИКА ----------
-    let tg = window.Telegram.WebApp;
+    // ---- ОТКЛЮЧАЕМ ЗУМ ----
+    document.addEventListener('touchmove', function(e) {
+        if (e.scale !== undefined) e.preventDefault();
+    }, { passive: false });
+    
+    // ---- Telegram Web App ----
+    const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
-
-    // Стартовые значения
-    let gold = 100;
-    let ore = 20;
-    let gems = 0;
-    let blacksmiths = 1;     // 1 меч/мин за кузнеца
-    let profitLevel = 0;     // +5% за уровень
-    let mineLevel = 0;       // +1 руда/мин
-    let prestigeCount = 0;
-
-    const BASE_SWORD_PRICE = 15;
-    const ORE_PER_SWORD = 10;
-    const TIME_TICK = 2000;   // 2 секунды тик (для удобства теста)
-    let lastUpdate = Date.now();
-
-    // Загрузка из localStorage (оффлайн-прогресс)
-    function loadGame() {
-        let saved = localStorage.getItem('weaponShop');
-        if (saved) {
-            try {
-                let data = JSON.parse(saved);
-                let now = Date.now();
-                let minutesOffline = (now - data.lastSave) / 1000 / 60;
-                if (minutesOffline > 0 && minutesOffline < 480) { // до 8 часов
-                    let oreGain = (data.mineLevel + 1) * minutesOffline;
-                    let goldGain = (data.blacksmiths * minutesOffline) * (BASE_SWORD_PRICE * (1 + data.profitLevel * 0.05));
-                    gold = data.gold + Math.floor(goldGain);
-                    ore = data.ore + Math.floor(oreGain);
-                    gems = data.gems;
-                    blacksmiths = data.blacksmiths;
-                    profitLevel = data.profitLevel;
-                    mineLevel = data.mineLevel;
-                    prestigeCount = data.prestigeCount || 0;
+    tg.MainButton.hide();
+    
+    // ---- 2D МИР И NPC ----
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Ресурсы игрока
+    let gold = 200;
+    let ore = 50;
+    let weapons = 0;
+    let blacksmiths = 1;
+    let customers = 1;
+    let forgeSpeed = 1;   // множитель производства
+    let mineLevel = 0;    // добыча руды в минуту: баз 5 + уровень*3
+    let lastTimestamp = Date.now();
+    
+    // NPC массив
+    let npcs = [];
+    
+    // Функция спавна кузнецов и покупателей
+    function spawnNPCs() {
+        npcs = [];
+        // Кузнецы (ходят к наковальне)
+        for(let i=0; i<blacksmiths; i++) {
+            npcs.push({
+                type: 'smith',
+                x: 100 + Math.random() * 200,
+                y: 100 + Math.random() * 200,
+                targetX: 400, targetY: 300,  // наковальня
+                carry: 0
+            });
+        }
+        // Покупатели (ходят к прилавку)
+        for(let i=0; i<customers; i++) {
+            npcs.push({
+                type: 'customer',
+                x: 600 + Math.random() * 200,
+                y: 500 + Math.random() * 150,
+                targetX: 700, targetY: 550,
+                buyTimer: 0
+            });
+        }
+        // Торговец оптом
+        npcs.push({
+            type: 'trader',
+            x: 800, y: 100,
+            targetX: 800, y: 100,
+            stock: 0
+        });
+    }
+    
+    // Рисуем карту и NPC
+    function drawMap() {
+        ctx.clearRect(0, 0, width, height);
+        // земля
+        ctx.fillStyle = '#3c5e2b';
+        ctx.fillRect(0, 0, width, height);
+        // дороги
+        ctx.fillStyle = '#b87c4f';
+        for(let i=0;i<10;i++) ctx.fillRect(i*100, height-80, 70, 10);
+        // наковальня (кузница)
+        ctx.fillStyle = '#555';
+        ctx.fillRect(380, 280, 60, 40);
+        ctx.fillStyle = '#888';
+        ctx.font = "20px system-ui";
+        ctx.fillText("🔨", 395, 315);
+        // прилавок
+        ctx.fillStyle = '#ac8e5c';
+        ctx.fillRect(680, 530, 80, 40);
+        ctx.fillStyle = '#f0c674';
+        ctx.fillText("🏪", 710, 565);
+        // шахта
+        ctx.fillStyle = '#4a3e35';
+        ctx.fillRect(50, 550, 90, 60);
+        ctx.fillStyle = '#aaa';
+        ctx.fillText("⛏️", 85, 595);
+        
+        // NPC
+        for(let n of npcs) {
+            if(n.type === 'smith') {
+                ctx.fillStyle = '#ffaa66';
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, 12, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = 'black';
+                ctx.fillText("👨‍🏭", n.x-10, n.y-5);
+            } else if(n.type === 'customer') {
+                ctx.fillStyle = '#aad4ff';
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, 10, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillText("🚶", n.x-8, n.y-4);
+            } else {
+                ctx.fillStyle = '#f5b042';
+                ctx.fillRect(n.x-10, n.y-10, 20, 20);
+                ctx.fillText("📦", n.x-6, n.y+4);
+            }
+        }
+    }
+    
+    // Обновление позиций (AI движения)
+    function moveNPCs() {
+        for(let n of npcs) {
+            if(n.type === 'smith') {
+                let dx = n.targetX - n.x;
+                let dy = n.targetY - n.y;
+                let dist = Math.hypot(dx,dy);
+                if(dist > 5) {
+                    n.x += (dx/dist) * 2;
+                    n.y += (dy/dist) * 2;
                 } else {
-                    gold = data.gold;
-                    ore = data.ore;
-                    gems = data.gems;
-                    blacksmiths = data.blacksmiths;
-                    profitLevel = data.profitLevel;
-                    mineLevel = data.mineLevel;
-                    prestigeCount = data.prestigeCount || 0;
+                    // кузнец у наковальни: производит оружие если есть руда
+                    if(ore >= 2 && Math.random()<0.1) {
+                        ore -= 2;
+                        weapons += 1;
+                        n.carry++;
+                    }
+                    // через 1 сек отходит
+                    if(Math.random()<0.02) n.targetX = 100+Math.random()*200;
                 }
-            } catch(e) { console.warn(e); }
-        }
-        saveGame();
-    }
-    function saveGame() {
-        let data = {
-            gold, ore, gems, blacksmiths, profitLevel, mineLevel, prestigeCount,
-            lastSave: Date.now()
-        };
-        localStorage.setItem('weaponShop', JSON.stringify(data));
-    }
-
-    // Динамические цены
-    function blacksmithCost() { return 50 + blacksmiths * 20; }
-    function profitCost() { return 100 + profitLevel * 50; }
-    function mineCost() { return 80 + mineLevel * 40; }
-
-    // Производство в минуту
-    function getOrePerMin() { return mineLevel + 1; }
-    function getSwordsPerMin() { return blacksmiths; }
-    function getSwordPrice() { return Math.floor(BASE_SWORD_PRICE * (1 + profitLevel * 0.05)); }
-    function getGoldPerMin() { return getSwordsPerMin() * getSwordPrice(); }
-
-    // Крафт меча
-    function craftSword() {
-        let costOre = ORE_PER_SWORD;
-        if (ore >= costOre) {
-            ore -= costOre;
-            // автоматически добавляем меч на склад (упрощённо - сразу даём золото при продаже поштучно, но здесь просто увеличим склад)
-            // для простоты: мечи храним неявно, продажа через кнопку "Продать всё"
-            if (!window.inventory) window.inventory = 0;
-            window.inventory = (window.inventory || 0) + 1;
-            tg.HapticFeedback.impactOccurred('light');
-            updateUI();
-            saveGame();
-        } else {
-            tg.showPopup({ title: "Не хватает", message: `Нужно ${costOre} руды` });
+            }
+            else if(n.type === 'customer') {
+                let dx = n.targetX - n.x;
+                let dy = n.targetY - n.y;
+                let dist = Math.hypot(dx,dy);
+                if(dist > 5) {
+                    n.x += (dx/dist) * 1.5;
+                    n.y += (dy/dist) * 1.5;
+                } else {
+                    // покупатель покупает оружие
+                    if(weapons > 0 && n.buyTimer <= 0) {
+                        let price = 15 + Math.floor(Math.random()*20);
+                        weapons -= 1;
+                        gold += price;
+                        n.buyTimer = 30;
+                        tg.HapticFeedback.impactOccurred('light');
+                    }
+                    if(n.buyTimer > 0) n.buyTimer--;
+                    if(Math.random()<0.01) n.targetX = 600+Math.random()*200;
+                }
+            }
         }
     }
-    function sellAll() {
-        let inv = window.inventory || 0;
-        if (inv === 0) return;
-        let priceEach = getSwordPrice();
-        let total = inv * priceEach;
-        gold += total;
-        window.inventory = 0;
-        tg.HapticFeedback.notificationOccurred('success');
-        updateUI();
-        saveGame();
-    }
-    function buyBlacksmith() {
-        let cost = blacksmithCost();
-        if (gold >= cost) {
-            gold -= cost;
-            blacksmiths++;
-            updateUI();
-            saveGame();
-        }
-    }
-    function buyProfit() {
-        let cost = profitCost();
-        if (gold >= cost) {
-            gold -= cost;
-            profitLevel++;
-            updateUI();
-            saveGame();
-        }
-    }
-    function buyMine() {
-        let cost = mineCost();
-        if (gold >= cost) {
-            gold -= cost;
-            mineLevel++;
-            updateUI();
-            saveGame();
-        }
-    }
-
-    // Оффлайн-тик (добыча руды и ковка в фоне)
-    function productionTick() {
+    
+    // Idle производство (каждые 2 сек)
+    function idleProduction() {
         let now = Date.now();
-        let diffMinutes = (now - lastUpdate) / 1000 / 60;
-        if (diffMinutes > 0.1) {
-            let oreGain = getOrePerMin() * diffMinutes;
+        let deltaMin = (now - lastTimestamp) / 60000;
+        if(deltaMin > 0.1) {
+            // руда от шахты
+            let oreGain = (5 + mineLevel*3) * deltaMin;
             ore += oreGain;
-            let swordsGained = getSwordsPerMin() * diffMinutes;
-            if (!window.inventory) window.inventory = 0;
-            window.inventory += swordsGained;
-            lastUpdate = now;
+            // кузнецы пассивно куют
+            let weaponGain = blacksmiths * forgeSpeed * deltaMin;
+            weapons += weaponGain;
+            lastTimestamp = now;
             updateUI();
-            saveGame();
         }
     }
-    setInterval(() => productionTick(), TIME_TICK);
-
-    // UI обновление
+    setInterval(() => {
+        idleProduction();
+        moveNPCs();
+        drawMap();
+        updateUI();
+    }, 100);
+    
     function updateUI() {
         document.getElementById('gold').innerText = Math.floor(gold);
         document.getElementById('ore').innerText = Math.floor(ore);
-        document.getElementById('gems').innerText = gems;
+        document.getElementById('weapons').innerText = Math.floor(weapons);
         document.getElementById('blacksmiths').innerText = blacksmiths;
-        document.getElementById('production').innerText = getGoldPerMin();
-        document.getElementById('craft-cost').innerHTML = `${ORE_PER_SWORD}🪨`;
-        let sellTotal = (window.inventory || 0) * getSwordPrice();
-        document.getElementById('sell-value').innerHTML = `+${Math.floor(sellTotal)}🪙`;
-
-        document.getElementById('blacksmithCost').innerHTML = `${Math.floor(blacksmithCost())}🪙`;
-        document.getElementById('profitCost').innerHTML = `${Math.floor(profitCost())}🪙`;
-        document.getElementById('mineCost').innerHTML = `${Math.floor(mineCost())}🪙`;
-
-        let totalEarned = gold;
-        let neededForPrestige = 50000;
-        let percent = Math.min(100, Math.floor((totalEarned / neededForPrestige) * 100));
-        document.getElementById('prestige-percent').innerText = percent;
-        document.getElementById('prestige-progress').style.width = percent + '%';
-
-        let topPlayers = [
-            { name: "Игрок_1", gold: 124000 },
-            { name: "Кузнец228", gold: 89000 },
-            { name: "Ты", gold: Math.floor(gold) }
-        ];
-        let leaderHtml = topPlayers.map(p => `<div>${p.name}: ${Math.floor(p.gold)}🪙</div>`).join('');
-        document.getElementById('leaderboard').innerHTML = leaderHtml;
+        document.getElementById('customers').innerText = customers;
+        document.getElementById('smithCost').innerText = Math.floor(50 + blacksmiths*15);
+        document.getElementById('custCost').innerText = Math.floor(80 + customers*25);
+        document.getElementById('mineLevel').innerText = mineLevel;
+        document.getElementById('mineUpCost').innerText = Math.floor(100 + mineLevel*60);
+        document.getElementById('forgeLevel').innerText = forgeSpeed;
     }
-
-    // Привязка кнопок
-    document.getElementById('craftBtn').onclick = () => { craftSword(); updateUI(); };
-    document.getElementById('sellBtn').onclick = () => { sellAll(); updateUI(); };
-    document.getElementById('buyBlacksmith').onclick = () => { buyBlacksmith(); updateUI(); };
-    document.getElementById('buyProfit').onclick = () => { buyProfit(); updateUI(); };
-    document.getElementById('buyMine').onclick = () => { buyMine(); updateUI(); };
-
-    // Первоначальный запуск
-    loadGame();
-    if (!window.inventory) window.inventory = 0;
-    lastUpdate = Date.now();
-    updateUI();
-
-    // Telegram MainButton для престижа (опционально)
-    tg.MainButton.setText("🌟 Перерождение (50k золота)");
-    tg.MainButton.show();
-    tg.MainButton.onClick(() => {
-        if (gold >= 50000) {
-            gold -= 50000;
-            prestigeCount++;
-            // бонус престижа: +1 кузнец, +1 шахта, +2 кристалла
-            blacksmiths += 1;
-            mineLevel += 1;
-            gems += 2;
-            updateUI();
-            saveGame();
-            tg.showPopup({ title: "Перерождение!", message: `Ты переродился ${prestigeCount} раз` });
-        } else {
-            tg.showPopup({ title: "Не хватает", message: "Нужно 50 000 золота для перерождения" });
+    
+    // Улучшения
+    function buyBlacksmith() {
+        let cost = 50 + blacksmiths*15;
+        if(gold >= cost) {
+            gold -= cost;
+            blacksmiths++;
+            spawnNPCs();
         }
+    }
+    function buyCustomer() {
+        let cost = 80 + customers*25;
+        if(gold >= cost) {
+            gold -= cost;
+            customers++;
+            spawnNPCs();
+        }
+    }
+    function buyForge() {
+        let cost = 100 + forgeSpeed*40;
+        if(gold >= cost) {
+            gold -= cost;
+            forgeSpeed++;
+        }
+    }
+    function buyMine() {
+        let cost = 100 + mineLevel*60;
+        if(gold >= cost) {
+            gold -= cost;
+            mineLevel++;
+        }
+    }
+    function sellAll() {
+        if(weapons > 0) {
+            let income = weapons * (12 + Math.floor(forgeSpeed*2));
+            gold += income;
+            weapons = 0;
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+    }
+    
+    // Привязка кнопок и ресайз
+    document.getElementById('sellBtn').onclick = sellAll;
+    document.getElementById('buySmith').onclick = buyBlacksmith;
+    document.getElementById('buyCustomer').onclick = buyCustomer;
+    document.getElementById('buyForge').onclick = buyForge;
+    document.getElementById('buyMineUpgrade').onclick = buyMine;
+    
+    window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        drawMap();
     });
+    
+    spawnNPCs();
+    lastTimestamp = Date.now();
+    drawMap();
+    updateUI();
 </script>
 </body>
 </html>
