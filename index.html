@@ -117,6 +117,382 @@
     
     resize();
     updateUI();
+    // ================== ЧАСТЬ 2: ПОЛНОЕ РАСШИРЕНИЕ ==================
+// ----- НОВЫЕ РЕСУРСЫ -----
+let wood = 0;
+let coal = 0;
+let crystals = 0;
+let mana = 0;
+let steel = 0;
+let lumberjacks = 0;
+let charcoalBurners = 0;
+let alchemyLevel = 0;
+let mercenaries = 0;
+let monsters = [];
+let monsterWave = 0;
+let guildSmith = 0;
+let guildTrade = 0;
+let guildMagic = 0;
+let reputationGnome = 0;
+let ships = [];
+let lastShipSpawn = Date.now();
+
+// ----- НОВЫЕ NPC (ЛЕСОРУБЫ, ЗАЩИТНИКИ) -----
+let extraNPCs = [];
+
+function spawnExtraNPCs() {
+    extraNPCs = [];
+    for(let i=0; i<lumberjacks; i++) {
+        extraNPCs.push({
+            type: 'lumberjack', x: 150 + Math.random() * 300, y: 80 + Math.random() * 200,
+            targetX: 400, targetY: 120, emotion: '🪓'
+        });
+    }
+    for(let i=0; i<mercenaries; i++) {
+        extraNPCs.push({
+            type: 'defender', x: 400 + Math.random() * 200, y: 200 + Math.random() * 150,
+            targetX: 500, targetY: 300, emotion: '⚔️'
+        });
+    }
+}
+
+// ----- РАСЧЁТ СТОИМОСТИ УЛУЧШЕНИЙ -----
+function woodcutterCost() { return 80 + lumberjacks * 25; }
+function charcoalCost() { return 100 + charcoalBurners * 40; }
+function alchemyCost() { return 150 + alchemyLevel * 90; }
+function mercenaryCost() { return 120 + mercenaries * 60; }
+function guildSmithCost() { return 200 + guildSmith * 20; }
+function guildTradeCost() { return 250 + guildTrade * 25; }
+function guildMagicCost() { return 300 + guildMagic * 30; }
+
+// ----- ПОКУПКА УЛУЧШЕНИЙ -----
+function buyWoodcutter() {
+    let cost = woodcutterCost();
+    if(gold >= cost) { gold -= cost; lumberjacks++; spawnExtraNPCs(); updateUIExtended(); drawExtended(); }
+}
+function buyCharcoalBurner() {
+    let cost = charcoalCost();
+    if(gold >= cost) { gold -= cost; charcoalBurners++; updateUIExtended(); }
+}
+function buyAlchemy() {
+    let cost = alchemyCost();
+    if(gold >= cost) { gold -= cost; alchemyLevel++; updateUIExtended(); }
+}
+function buyMercenary() {
+    let cost = mercenaryCost();
+    if(gold >= cost) { gold -= cost; mercenaries++; spawnExtraNPCs(); updateUIExtended(); drawExtended(); }
+}
+function buyGuildSmith() {
+    let cost = guildSmithCost();
+    if(gold >= cost) { gold -= cost; guildSmith = Math.min(100, guildSmith+10); updateUIExtended(); }
+}
+function buyGuildTrade() {
+    let cost = guildTradeCost();
+    if(gold >= cost) { gold -= cost; guildTrade = Math.min(100, guildTrade+10); updateUIExtended(); }
+}
+function buyGuildMagic() {
+    let cost = guildMagicCost();
+    if(gold >= cost) { gold -= cost; guildMagic = Math.min(100, guildMagic+10); updateUIExtended(); }
+}
+
+// ----- ПАССИВНАЯ ДОБЫЧА -----
+function passiveExtended() {
+    let delta = 0.05;
+    if(lumberjacks > 0) wood += lumberjacks * 1.8 * delta;
+    if(charcoalBurners > 0 && wood > 0) {
+        let usedWood = Math.min(wood, charcoalBurners * 1.5 * delta);
+        wood -= usedWood;
+        coal += usedWood * 0.8;
+    }
+    if(alchemyLevel > 0 && coal > 0) {
+        let conversion = Math.min(coal, alchemyLevel * 1.2 * delta);
+        coal -= conversion;
+        crystals += conversion * 0.15;
+        mana = Math.min(mana + crystals * 0.05 * delta, 100);
+    }
+    // Бонусы гильдий
+    if(guildSmith > 0) blacksmiths = Math.max(1, blacksmiths + guildSmith/200);
+    if(guildTrade > 0) reputation += guildTrade/100;
+    if(guildMagic > 0) mana = Math.min(100, mana + guildMagic/50);
+}
+
+// ----- МОНСТРЫ -----
+function trySpawnMonsters() {
+    if(monsterWave > 0) return;
+    if(Math.random() < 0.15 && mercenaries < 5) {
+        let waveSize = 1 + Math.floor(Math.random() * 3);
+        for(let i=0;i<waveSize;i++) {
+            let x = Math.random() < 0.5 ? 20 : canvas.width-60;
+            let y = 100 + Math.random() * (canvas.height-200);
+            monsters.push({ x: x, y: y, hp: 20 + Math.floor(Math.random()*30), maxHp: 40, targetX: canvas.width/2, targetY: canvas.height/2 });
+        }
+        monsterWave = monsters.length;
+        tg.showPopup({ title: "⚠️ Монстры!", message: `Появилось ${monsters.length} врагов!` });
+    }
+}
+
+function battleStep() {
+    if(monsters.length === 0) return;
+    for(let m of monsters) {
+        let dx = m.targetX - m.x, dy = m.targetY - m.y;
+        let dist = Math.hypot(dx,dy);
+        if(dist > 15) {
+            m.x += (dx/dist) * 1.2;
+            m.y += (dy/dist) * 1.2;
+        } else {
+            weapons = Math.max(0, weapons - 3);
+            gold = Math.max(0, gold - 5);
+            m.hp -= mercenaries * 8;
+            if(m.hp <= 0) {
+                monsters = monsters.filter(mo => mo !== m);
+                gold += 30 + Math.floor(Math.random()*30);
+                crystals += 1;
+                tg.HapticFeedback.impactOccurred('heavy');
+            }
+        }
+    }
+    if(monsters.length === 0) monsterWave = 0;
+}
+
+// ----- ТОРГОВЫЕ КОРАБЛИ -----
+function spawnShip() {
+    let now = Date.now();
+    if(ships.length === 0 && now - lastShipSpawn > 120000) {
+        let types = ['wood', 'coal', 'crystals', 'steel'];
+        let type = types[Math.floor(Math.random()*types.length)];
+        let amount = 20 + Math.floor(Math.random()*60);
+        let price = amount * (type==='crystals' ? 8 : 3);
+        ships.push({ type, goods: amount, price, arriveTime: now + 30000 });
+        lastShipSpawn = now;
+        tg.showPopup({ title: "🚢 Торговый корабль!", message: `Прибывает с ${type} через 30 сек` });
+    }
+}
+
+function buyFromShip() {
+    if(ships.length === 0) return;
+    let ship = ships[0];
+    if(gold >= ship.price) {
+        gold -= ship.price;
+        if(ship.type === 'wood') wood += ship.goods;
+        if(ship.type === 'coal') coal += ship.goods;
+        if(ship.type === 'crystals') crystals += ship.goods;
+        if(ship.type === 'steel') steel += ship.goods;
+        ships.shift();
+        updateUIExtended();
+        tg.HapticFeedback.impactOccurred('light');
+    } else tg.showPopup({ title: "Не хватает", message: `Нужно ${ship.price}💰` });
+}
+
+// ----- МУЛЬТЯШНАЯ ОТРИСОВКА (ПЕРЕОПРЕДЕЛЯЕМ draw) -----
+const originalDraw = draw;
+drawExtended = function() {
+    if(!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Трава с цветочками
+    ctx.fillStyle = '#9bcd6c';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for(let i=0;i<60;i++) {
+        ctx.fillStyle = '#e6c229';
+        ctx.beginPath();
+        ctx.arc(30+i*97, canvas.height-40, 5, 0, Math.PI*2);
+        ctx.fill();
+    }
+    // Дорожка
+    ctx.fillStyle = '#b97f44';
+    for(let i=0;i<20;i++) ctx.fillRect(i*70, canvas.height-70, 55, 12);
+    // Наковальня
+    ctx.fillStyle = '#6b4c3b';
+    ctx.fillRect(canvas.width/2-50, canvas.height/2-50, 100, 80);
+    ctx.fillStyle = '#e9c58b';
+    ctx.font = "30px system-ui";
+    ctx.fillText("🔨", canvas.width/2-20, canvas.height/2+10);
+    // Прилавок
+    ctx.fillStyle = '#b38b5d';
+    ctx.fillRect(canvas.width-150, canvas.height-150, 90, 55);
+    ctx.fillStyle = '#fadf9e';
+    ctx.fillText("🏪", canvas.width-120, canvas.height-110);
+    // Лесопилка
+    if(lumberjacks > 0) {
+        ctx.fillStyle = '#7c5e3a';
+        ctx.fillRect(50, 30, 80, 60);
+        ctx.fillStyle = '#dec97a';
+        ctx.fillText("🪵", 80, 75);
+    }
+    // Алхимическая башня
+    if(alchemyLevel > 0) {
+        ctx.fillStyle = '#8b6b9d';
+        ctx.fillRect(canvas.width-120, 40, 60, 80);
+        ctx.fillStyle = '#e0b0ff';
+        ctx.fillText("🧪", canvas.width-95, 90);
+    }
+    // Обычные NPC (кузнецы)
+    for(let i=0; i<blacksmiths; i++) {
+        let x = 100 + (i%5)*45;
+        let y = canvas.height-80 - Math.floor(i/5)*60;
+        ctx.fillStyle = '#f7c873';
+        ctx.beginPath();
+        ctx.ellipse(x, y, 16, 18, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(x-6, y-6, 3, 0, Math.PI*2);
+        ctx.arc(x+6, y-6, 3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(x-7, y-8, 1, 0, Math.PI*2);
+        ctx.arc(x+5, y-8, 1, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#5e2a2a';
+        ctx.beginPath();
+        ctx.arc(x, y+2, 6, 0, Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#2c1e0e';
+        ctx.font = "20px system-ui";
+        ctx.fillText("👨‍🏭", x-12, y-18);
+    }
+    // Дополнительные NPC (лесорубы, защитники)
+    for(let n of extraNPCs) {
+        ctx.fillStyle = n.type === 'lumberjack' ? '#8bcd6e' : '#b0c4de';
+        ctx.beginPath();
+        ctx.ellipse(n.x, n.y, 14, 16, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(n.x-5, n.y-4, 2.5, 0, Math.PI*2);
+        ctx.arc(n.x+5, n.y-4, 2.5, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#5e2a2a';
+        ctx.beginPath();
+        ctx.arc(n.x, n.y+2, 4, 0, Math.PI);
+        ctx.fill();
+        ctx.font = "20px system-ui";
+        ctx.fillStyle = '#2c1e0e';
+        ctx.fillText(n.emotion, n.x-12, n.y-18);
+    }
+    // Монстры
+    for(let m of monsters) {
+        ctx.fillStyle = '#6b2e2e';
+        ctx.beginPath();
+        ctx.ellipse(m.x, m.y, 18, 20, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#ffaa66';
+        ctx.font = "bold 24px system-ui";
+        ctx.fillText("👾", m.x-14, m.y-6);
+        ctx.fillStyle = 'white';
+        ctx.font = "12px monospace";
+        ctx.fillText(`${Math.floor(m.hp)}/${m.maxHp}`, m.x-18, m.y+15);
+    }
+    // Корабль
+    if(ships.length > 0) {
+        ctx.fillStyle = '#6b8c5c';
+        ctx.fillRect(canvas.width-100, 50, 80, 40);
+        ctx.fillStyle = '#f0c674';
+        ctx.font = "24px system-ui";
+        ctx.fillText("🚢", canvas.width-75, 85);
+        ctx.fillStyle = '#fff';
+        ctx.font = "10px monospace";
+        ctx.fillText("Купить за "+ships[0].price+"💰", canvas.width-95, 105);
+    }
+};
+
+// ----- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА -----
+function updateUIExtended() {
+    document.getElementById('gold').innerText = Math.floor(gold);
+    document.getElementById('weapons').innerText = Math.floor(weapons);
+    document.getElementById('reputation').innerText = Math.floor(reputation);
+    let upgradeBtn = document.getElementById('upgradeBtn');
+    if(upgradeBtn) upgradeBtn.innerHTML = `📈 Кузнец +1 (${Math.floor(50 + blacksmiths*15)}💰)`;
+    
+    // Добавляем новые кнопки, если ещё нет
+    let panel = document.querySelector('.ui-panel');
+    if(panel && !document.getElementById('woodcutBtn')) {
+        let btnHTML = `
+            <button id="woodcutBtn">🪓 Лесоруб (${woodcutterCost()}💰)</button>
+            <button id="charcoalBtn">🔥 Углежог (${charcoalCost()}💰)</button>
+            <button id="alchemyBtn">🧪 Алхимик (${alchemyCost()}💰)</button>
+            <button id="mercBtn">⚔️ Наёмник (${mercenaryCost()}💰)</button>
+            <button id="guildSmithBtn">🏅 Гильдия кузн. (${guildSmithCost()}💰)</button>
+            <button id="guildTradeBtn">📦 Гильдия торгов. (${guildTradeCost()}💰)</button>
+            <button id="guildMagicBtn">🔮 Гильдия магов (${guildMagicCost()}💰)</button>
+            <button id="shipBtn">🚢 Купить с корабля</button>
+        `;
+        panel.insertAdjacentHTML('beforeend', btnHTML);
+        document.getElementById('woodcutBtn').onclick = buyWoodcutter;
+        document.getElementById('charcoalBtn').onclick = buyCharcoalBurner;
+        document.getElementById('alchemyBtn').onclick = buyAlchemy;
+        document.getElementById('mercBtn').onclick = buyMercenary;
+        document.getElementById('guildSmithBtn').onclick = buyGuildSmith;
+        document.getElementById('guildTradeBtn').onclick = buyGuildTrade;
+        document.getElementById('guildMagicBtn').onclick = buyGuildMagic;
+        document.getElementById('shipBtn').onclick = buyFromShip;
+    }
+    // Обновляем цены на кнопках
+    if(document.getElementById('woodcutBtn')) document.getElementById('woodcutBtn').innerHTML = `🪓 Лесоруб (${woodcutterCost()}💰)`;
+    if(document.getElementById('charcoalBtn')) document.getElementById('charcoalBtn').innerHTML = `🔥 Углежог (${charcoalCost()}💰)`;
+    if(document.getElementById('alchemyBtn')) document.getElementById('alchemyBtn').innerHTML = `🧪 Алхимик (${alchemyCost()}💰)`;
+    if(document.getElementById('mercBtn')) document.getElementById('mercBtn').innerHTML = `⚔️ Наёмник (${mercenaryCost()}💰)`;
+    if(document.getElementById('guildSmithBtn')) document.getElementById('guildSmithBtn').innerHTML = `🏅 Гильдия кузн. (${guildSmithCost()}💰)`;
+    if(document.getElementById('guildTradeBtn')) document.getElementById('guildTradeBtn').innerHTML = `📦 Гильдия торгов. (${guildTradeCost()}💰)`;
+    if(document.getElementById('guildMagicBtn')) document.getElementById('guildMagicBtn').innerHTML = `🔮 Гильдия магов (${guildMagicCost()}💰)`;
+    
+    // Отображаем новые ресурсы в панели
+    let statsDiv = document.querySelector('.ui-panel');
+    if(statsDiv && !document.getElementById('woodStat')) {
+        let resourceHTML = `<div class="stat">🪵 <span id="woodStat">0</span></div>
+                           <div class="stat">🪨 <span id="coalStat">0</span></div>
+                           <div class="stat">🔮 <span id="crystalStat">0</span></div>
+                           <div class="stat">✨ <span id="manaStat">0</span></div>`;
+        statsDiv.insertAdjacentHTML('afterbegin', resourceHTML);
+    }
+    if(document.getElementById('woodStat')) document.getElementById('woodStat').innerText = Math.floor(wood);
+    if(document.getElementById('coalStat')) document.getElementById('coalStat').innerText = Math.floor(coal);
+    if(document.getElementById('crystalStat')) document.getElementById('crystalStat').innerText = Math.floor(crystals);
+    if(document.getElementById('manaStat')) document.getElementById('manaStat').innerText = Math.floor(mana);
+}
+
+// ----- ДВИЖЕНИЕ НОВЫХ NPC -----
+function moveExtraNPCs() {
+    for(let n of extraNPCs) {
+        let dx = n.targetX - n.x, dy = n.targetY - n.y;
+        let dist = Math.hypot(dx,dy);
+        if(dist > 5) {
+            n.x += (dx/dist) * 1.5;
+            n.y += (dy/dist) * 1.5;
+        } else {
+            if(n.type === 'lumberjack') {
+                wood += 1;
+                n.emotion = '🪵';
+                setTimeout(() => { if(extraNPCs.includes(n)) n.emotion = '🪓'; }, 300);
+            }
+            if(n.type === 'defender') {
+                n.emotion = '🛡️';
+            }
+            if(Math.random()<0.02) n.targetX = 100 + Math.random() * (canvas.width-200);
+        }
+    }
+}
+
+// ----- ПЕРЕОПРЕДЕЛЯЕМ ИНТЕРВАЛЫ -----
+const oldInterval = setInterval;
+clearInterval(window._mainInterval);
+window._mainInterval = setInterval(() => {
+    let crafted = blacksmiths;
+    weapons += crafted;
+    passiveExtended();
+    trySpawnMonsters();
+    battleStep();
+    spawnShip();
+    moveExtraNPCs();
+    updateUIExtended();
+    drawExtended();
+}, 2000);
+
+// Инициализация
+spawnExtraNPCs();
+updateUIExtended();
+drawExtended();
+// ================== КОНЕЦ ЧАСТИ 2 ==================
 </script>
 </body>
 </html>
