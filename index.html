@@ -3,441 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MEGA Weapon Shop - Idle 2D</title>
+    <title>Weapon Shop Idle</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            user-select: none;
-            touch-action: manipulation;
-            box-sizing: border-box;
-        }
-        body {
-            margin: 0;
-            background: #1a472a;
-            overflow: hidden;
-            font-family: 'Segoe UI', 'Comic Neue', 'Comic Sans MS', system-ui;
-        }
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            display: block;
-            background: #86bf6c;
-            cursor: crosshair;
-        }
+        * { user-select: none; touch-action: manipulation; }
+        body { margin: 0; background: #1a472a; overflow: hidden; font-family: system-ui; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #86bf6c; }
         .ui-panel {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.75);
-            backdrop-filter: blur(12px);
-            padding: 10px 12px;
-            border-radius: 28px 28px 0 0;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 8px;
-            z-index: 20;
-            font-size: 13px;
-            font-weight: bold;
-            color: #FFE4B5;
-            border-top: 2px solid #FFD966;
-        }
-        .ui-section {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .stat {
-            background: #000000aa;
-            padding: 4px 12px;
-            border-radius: 40px;
-            backdrop-filter: blur(4px);
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(12px);
+            padding: 12px; display: flex; flex-wrap: wrap; gap: 8px;
+            justify-content: space-between; z-index: 10; color: #FFE4B5;
+            border-radius: 20px 20px 0 0; font-size: 14px; font-weight: bold;
         }
         button {
-            background: #f4a261;
-            border: none;
-            border-radius: 60px;
-            padding: 6px 14px;
-            font-weight: bold;
-            font-size: 13px;
-            color: #2c1a0c;
-            cursor: pointer;
-            transition: 0.1s linear;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            background: #f4a261; border: none; border-radius: 60px;
+            padding: 8px 16px; font-weight: bold; cursor: pointer;
         }
-        button:active {
-            transform: scale(0.96);
-        }
-        .upgrade-grid {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            max-width: 100%;
-            padding-bottom: 4px;
-        }
-        .upgrade-card {
-            background: #2e3b1fcc;
-            border-radius: 32px;
-            padding: 4px 12px;
-            text-align: center;
-            font-size: 11px;
-            font-weight: bold;
-            backdrop-filter: blur(4px);
-            cursor: pointer;
-            min-width: 90px;
-        }
-        .events-area {
-            background: #f4a26133;
-            border-radius: 20px;
-            padding: 4px 8px;
-            font-size: 11px;
-            display: flex;
-            gap: 8px;
-        }
-        @media (max-width: 650px) {
-            .stat { font-size: 10px; padding: 2px 8px; }
-            button { font-size: 10px; padding: 4px 10px; }
-            .upgrade-card { min-width: 70px; font-size: 9px; }
-        }
+        button:active { transform: scale(0.96); }
+        .stat { background: #000000aa; padding: 4px 12px; border-radius: 40px; }
     </style>
 </head>
 <body>
 <div>
-    <canvas id="gameCanvas" width="1200" height="800"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <div class="ui-panel">
-        <div class="ui-section">
-            <div class="stat">💰 <span id="gold">0</span></div>
-            <div class="stat">🪨 <span id="ore">0</span></div>
-            <div class="stat">⚔️ <span id="weapons">0</span></div>
-            <div class="stat">🏅 <span id="prestige">0</span></div>
-            <div class="stat">⭐ Реп: <span id="reputation">0</span></div>
-        </div>
-        <div class="ui-section">
-            <button id="sellAllBtn">Продать всё ⚡</button>
-            <button id="eventBoostBtn" style="background:#d9a13b;">🎁 Удвоение (5 мин)</button>
-        </div>
-    </div>
-    <div class="ui-panel" style="bottom: 70px; background: #1e2a1ccc; flex-direction: column; gap: 5px;">
-        <div class="upgrade-grid">
-            <div class="upgrade-card" id="buySmith">👨‍🏭 Кузнец<br><span id="smithCost">50💰</span></div>
-            <div class="upgrade-card" id="buyCustomer">🛒 Клиент<br><span id="custCost">70💰</span></div>
-            <div class="upgrade-card" id="buyForge">⚙️ Скорость<br><span id="forgeLvl">0</span><br><span id="forgeCost">100💰</span></div>
-            <div class="upgrade-card" id="buyMine">⛏️ Шахта Lv<span id="mineLvl">0</span><br><span id="mineCost">90💰</span></div>
-            <div class="upgrade-card" id="buySteel">🔩 Сталеварня<br><span id="steelCost">200💰</span></div>
-        </div>
-        <div class="events-area" id="eventsPanel">
-            📅 Ивенты: <span id="eventDesc">Нет активных</span>
-        </div>
+        <div class="stat">💰 <span id="gold">500</span></div>
+        <div class="stat">⚔️ <span id="weapons">0</span></div>
+        <div class="stat">⭐ <span id="reputation">0</span></div>
+        <button id="sellBtn">Продать всё</button>
+        <button id="upgradeBtn">📈 Кузнец +1 (50💰)</button>
     </div>
 </div>
 <script>
-    // --------------------------------------------------------------
-    // MEGA МУЛЬТЯШНАЯ 2D ИГРА (КУЗНИЦА + NPC + СТАНКИ + СТАЛЬ + РЕПУТАЦИЯ)
-    // --------------------------------------------------------------
+    // ========== ОСНОВНАЯ ИГРА ==========
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
     
-    // --- ОТКЛЮЧЕНИЕ ЗУМА ---
-    document.addEventListener('touchmove', (e) => { if(e.scale !== undefined) e.preventDefault(); }, { passive: false });
+    let gold = 500;
+    let weapons = 0;
+    let reputation = 0;
+    let blacksmiths = 1;
     
-    // --- CANVAS ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    function resizeCanvas() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
-        drawWorld();
+    
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        draw();
     }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    window.addEventListener('resize', resize);
     
-    // ========== ИГРОВЫЕ ДАННЫЕ (МАСШТАБИРУЕМЫЕ) ==========
-    let gold = 250;
-    let ore = 80;
-    let weapons = 0;
-    let steel = 0;         // новый ресурс
-    let reputation = 0;    // репутация (влияет на цены)
-    let prestige = 0;      // перерождения
-    
-    // Улучшения
-    let blacksmiths = 1;    // кол-во кузнецов
-    let customers = 1;      // покупатели
-    let forgeSpeed = 1.0;   // множитель ковки
-    let mineLevel = 0;      // руда/мин: 3 + уровень*2
-    let steelFactory = 0;   // сталеварня (0 - нет, >0 - уровни)
-    
-    // Временные бонусы
-    let doubleProfitUntil = 0;   // таймстемп до удвоения прибыли
-    
-    // Ивенты (генерируются случайно)
-    let activeEvent = null;      // { name, bonusMulti, endTime }
-    
-    // NPC массив (динамический)
-    let npcs = [];
-    
-    // Цены на улучшения
-    function smithCost() { return Math.floor(50 + blacksmiths * 18); }
-    function custCost() { return Math.floor(70 + customers * 22); }
-    function forgeCost() { return Math.floor(100 + forgeSpeed * 35); }
-    function mineCost() { return Math.floor(90 + mineLevel * 45); }
-    function steelCost() { return Math.floor(200 + steelFactory * 80); }
-    
-    // Производство ресурсов (в минуту)
-    function orePerMin() { return 3 + mineLevel * 2; }
-    function steelPerMin() { return steelFactory * 1.2; }
-    function weaponsPerMin() { return blacksmiths * forgeSpeed * (steelFactory>0 ? 1.5 : 1); }
-    function weaponBasePrice() { 
-        let price = 12 + Math.floor(forgeSpeed * 2) + Math.floor(reputation / 20);
-        if(doubleProfitUntil > Date.now()) price *= 2;
-        if(activeEvent && activeEvent.bonusMulti) price *= activeEvent.bonusMulti;
-        return Math.floor(price);
-    }
-    
-    // Авто-продажа? (не авто, но кнопка)
-    let lastTimestamp = Date.now();
-    
-    // ---- инициализация спавна NPC (мультяшные человечки) ----
-    function spawnAllNPCs() {
-        npcs = [];
+    function draw() {
+        ctx.fillStyle = '#86bf6c';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#6b4c3b';
+        ctx.fillRect(canvas.width/2-50, canvas.height/2-50, 100, 80);
+        ctx.fillStyle = '#e9c58b';
+        ctx.font = "30px system-ui";
+        ctx.fillText("🔨", canvas.width/2-20, canvas.height/2+10);
+        ctx.fillStyle = '#f7c873';
         for(let i=0; i<blacksmiths; i++) {
-            npcs.push({
-                type: 'smith',
-                x: 120 + Math.random() * 250,
-                y: 100 + Math.random() * 180,
-                targetX: 420, targetY: 280,
-                animFrame: 0, emotion: '🔥'
-            });
-        }
-        for(let i=0; i<customers; i++) {
-            npcs.push({
-                type: 'customer',
-                x: 650 + Math.random() * 200,
-                y: 500 + Math.random() * 150,
-                targetX: 720, targetY: 550,
-                buyCooldown: 0, emotion: '💰'
-            });
-        }
-        // добавлен продавец стали
-        npcs.push({
-            type: 'trader',
-            x: 880, y: 70, targetX: 880, targetY: 70,
-            emotion: '📦'
-        });
-    }
-    
-    // Обновление движений NPC
-    function updateNPCs() {
-        for(let n of npcs) {
-            if(n.type === 'smith') {
-                let dx = n.targetX - n.x, dy = n.targetY - n.y;
-                let dist = Math.hypot(dx,dy);
-                if(dist > 5) {
-                    n.x += (dx/dist) * 1.8;
-                    n.y += (dy/dist) * 1.8;
-                    n.animFrame = (n.animFrame||0)+0.2;
-                } else {
-                    // кузнец тратит руду и делает оружие (и сталь, если есть)
-                    if(ore >= 2 && Math.random()<0.12) {
-                        ore -= 2;
-                        weapons += 1;
-                        n.emotion = '🔨';
-                    }
-                    if(steel >= 1 && Math.random()<0.08) {
-                        steel -= 1;
-                        weapons += 2;
-                        n.emotion = '⚡';
-                    }
-                    setTimeout(()=>{ if(n) n.emotion = '🔥'; }, 200);
-                    if(Math.random()<0.02) n.targetX = 100 + Math.random()*280;
-                }
-            }
-            else if(n.type === 'customer') {
-                let dx = n.targetX - n.x, dy = n.targetY - n.y;
-                let dist = Math.hypot(dx,dy);
-                if(dist > 5) {
-                    n.x += (dx/dist) * 1.5;
-                    n.y += (dy/dist) * 1.5;
-                } else {
-                    if(weapons > 0 && n.buyCooldown <= 0) {
-                        let price = weaponBasePrice();
-                        let sold = Math.min(weapons, 1 + Math.floor(Math.random()*3));
-                        weapons -= sold;
-                        gold += sold * price;
-                        reputation += 0.2;
-                        n.buyCooldown = 25;
-                        n.emotion = '💲';
-                        tg.HapticFeedback.impactOccurred('light');
-                    }
-                    if(n.buyCooldown > 0) n.buyCooldown--;
-                    if(Math.random()<0.01) n.targetX = 550+Math.random()*280;
-                }
-            }
+            ctx.beginPath();
+            ctx.arc(100 + i*40, canvas.height-80, 20, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.fillText("👨‍🏭", 85 + i*40, canvas.height-85);
+            ctx.fillStyle = '#f7c873';
         }
     }
     
-    // Пассивная добыча (каждые 2 секунды)
-    function passiveIncome() {
-        let now = Date.now();
-        let deltaMin = Math.min(5, (now - lastTimestamp) / 60000);
-        if(deltaMin > 0.05) {
-            let oreGain = orePerMin() * deltaMin;
-            ore += oreGain;
-            let steelGain = steelPerMin() * deltaMin;
-            steel += steelGain;
-            let weaponGain = weaponsPerMin() * deltaMin;
-            weapons += weaponGain;
-            lastTimestamp = now;
-            updateUI();
-            drawWorld();
-        }
+    function updateUI() {
+        document.getElementById('gold').innerText = Math.floor(gold);
+        document.getElementById('weapons').innerText = Math.floor(weapons);
+        document.getElementById('reputation').innerText = Math.floor(reputation);
+        document.getElementById('upgradeBtn').innerHTML = `📈 Кузнец +1 (${Math.floor(50 + blacksmiths*15)}💰)`;
     }
-    setInterval(() => { passiveIncome(); updateNPCs(); drawWorld(); updateUI(); }, 1800);
     
-    // Механика ивентов (каждые 5 минут)
-    setInterval(() => {
-        if(activeEvent && activeEvent.endTime < Date.now()) activeEvent = null;
-        if(!activeEvent && Math.random()<0.25) {
-            let eventsList = [
-                { name: "💥 Праздник кузнецов", bonusMulti: 1.8, duration: 180000 },
-                { name: "🤝 Ярмарка", bonusMulti: 1.5, duration: 120000 },
-                { name: "👑 Королевский заказ", bonusMulti: 2.2, duration: 90000 }
-            ];
-            let ev = eventsList[Math.floor(Math.random()*eventsList.length)];
-            activeEvent = { name: ev.name, bonusMulti: ev.bonusMulti, endTime: Date.now()+ev.duration };
-        }
-        updateUI();
-    }, 25000);
-    
-    // Улучшения (действия)
-    function buyBlacksmith() { let c=smithCost(); if(gold>=c) { gold-=c; blacksmiths++; spawnAllNPCs(); updateUI();} }
-    function buyCustomer() { let c=custCost(); if(gold>=c) { gold-=c; customers++; spawnAllNPCs(); updateUI();} }
-    function buyForgeUpgrade() { let c=forgeCost(); if(gold>=c) { gold-=c; forgeSpeed+=0.3; updateUI();} }
-    function buyMineUpgrade() { let c=mineCost(); if(gold>=c) { gold-=c; mineLevel++; updateUI();} }
-    function buySteelFactory() { let c=steelCost(); if(gold>=c) { gold-=c; steelFactory++; updateUI();} }
-    function sellAllWeapons() {
-        if(weapons>0) {
-            let price = weaponBasePrice();
+    function sellAll() {
+        if(weapons > 0) {
+            let price = 12 + Math.floor(reputation / 10);
             let total = weapons * price;
             gold += total;
             weapons = 0;
             tg.HapticFeedback.notificationOccurred('success');
             updateUI();
+            draw();
         }
     }
-    function activateDoubleProfit() {
-        let cost = 30 + Math.floor(prestige * 5);
+    
+    function buyBlacksmith() {
+        let cost = 50 + blacksmiths * 15;
         if(gold >= cost) {
             gold -= cost;
-            doubleProfitUntil = Date.now() + 300000; // 5 минут
-            tg.showPopup({ title: "Удвоение!", message: "Прибыль ×2 на 5 минут" });
+            blacksmiths++;
             updateUI();
-        } else tg.showPopup({ title: "Не хватает", message: `Нужно ${cost} золота` });
-    }
-    
-    // Отрисовка мультяшного мира
-    function drawWorld() {
-        if(!ctx) return;
-        ctx.clearRect(0,0,width,height);
-        // травка с цветочками
-        ctx.fillStyle = '#9bcd6c';
-        ctx.fillRect(0,0,width,height);
-        for(let i=0;i<80;i++) ctx.fillStyle = '#e6c229', ctx.beginPath(), ctx.arc(30+i*97, height-40, 4,0,Math.PI*2), ctx.fill();
-        // дорога
-        ctx.fillStyle = '#b97f44';
-        for(let i=0;i<20;i++) ctx.fillRect(i*70, height-70, 55, 12);
-        // наковальня
-        ctx.fillStyle = '#6b4c3b';
-        ctx.shadowBlur=0;
-        ctx.fillRect(400,250,70,45);
-        ctx.fillStyle = '#e9c58b';
-        ctx.font = "26px system-ui";
-        ctx.fillText("🔨", 420, 285);
-        // прилавок
-        ctx.fillStyle = '#b38b5d';
-        ctx.fillRect(700,520,90,45);
-        ctx.fillStyle = '#fadf9e';
-        ctx.fillText("🏪", 730, 560);
-        // шахта
-        ctx.fillStyle = '#5c4033';
-        ctx.fillRect(45,520,70,55);
-        ctx.fillStyle = '#c0c0c0';
-        ctx.fillText("⛏️", 70, 565);
-        // сталеварня
-        if(steelFactory>0) {
-            ctx.fillStyle = '#aa7a5c';
-            ctx.fillRect(850,70,65,55);
-            ctx.fillStyle = '#ffaa55';
-            ctx.fillText("🏭", 870, 115);
+            draw();
         }
-        // рисуем NPC с эмоциями и круглыми глазами
-        for(let n of npcs) {
-            ctx.shadowBlur = 6;
-            ctx.fillStyle = (n.type==='smith') ? '#f7c873' : '#b3d9ff';
-            ctx.beginPath();
-            ctx.ellipse(n.x, n.y, 14, 16, 0, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.arc(n.x-6, n.y-4, 3, 0, Math.PI*2);
-            ctx.arc(n.x+6, n.y-4, 3, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(n.x-7, n.y-6, 1, 0, Math.PI*2);
-            ctx.arc(n.x+5, n.y-6, 1, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = '#5e2a2a';
-            ctx.beginPath();
-            ctx.arc(n.x, n.y+2, 5, 0, Math.PI);
-            ctx.fill();
-            ctx.font = "18px system-ui";
-            ctx.fillStyle = '#2c1e0e';
-            ctx.fillText(n.emotion || '⭐', n.x-12, n.y-15);
-        }
-        ctx.shadowBlur = 0;
     }
     
-    function updateUI() {
-        document.getElementById('gold').innerText = Math.floor(gold);
-        document.getElementById('ore').innerText = Math.floor(ore);
-        document.getElementById('weapons').innerText = Math.floor(weapons);
-        document.getElementById('prestige').innerText = prestige;
-        document.getElementById('reputation').innerText = Math.floor(reputation);
-        document.getElementById('smithCost').innerHTML = smithCost()+'💰';
-        document.getElementById('custCost').innerHTML = custCost()+'💰';
-        document.getElementById('forgeLvl').innerHTML = forgeSpeed.toFixed(1);
-        document.getElementById('forgeCost').innerHTML = forgeCost()+'💰';
-        document.getElementById('mineLvl').innerHTML = mineLevel;
-        document.getElementById('mineCost').innerHTML = mineCost()+'💰';
-        document.getElementById('steelCost').innerHTML = steelCost()+'💰';
-        let eventText = activeEvent ? `${activeEvent.name} x${activeEvent.bonusMulti}` : "Нет ивента";
-        document.getElementById('eventDesc').innerText = eventText;
-        drawWorld();
-    }
+    // Ковка оружия каждые 2 секунды
+    setInterval(() => {
+        let crafted = blacksmiths;
+        weapons += crafted;
+        updateUI();
+        draw();
+    }, 2000);
     
-    // Привязка кнопок
-    document.getElementById('sellAllBtn').onclick = sellAllWeapons;
-    document.getElementById('eventBoostBtn').onclick = activateDoubleProfit;
-    document.getElementById('buySmith').onclick = buyBlacksmith;
-    document.getElementById('buyCustomer').onclick = buyCustomer;
-    document.getElementById('buyForge').onclick = buyForgeUpgrade;
-    document.getElementById('buyMine').onclick = buyMineUpgrade;
-    document.getElementById('buySteel').onclick = buySteelFactory;
+    document.getElementById('sellBtn').onclick = sellAll;
+    document.getElementById('upgradeBtn').onclick = buyBlacksmith;
     
-    // Запуск
-    spawnAllNPCs();
-    lastTimestamp = Date.now();
+    resize();
     updateUI();
-    setInterval(() => { updateUI(); drawWorld(); }, 500);
-    resizeCanvas();
 </script>
 </body>
 </html>
