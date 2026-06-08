@@ -1,789 +1,202 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Weapon Shop Idle</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * { user-select: none; touch-action: manipulation; }
-        body { margin: 0; background: #1a472a; overflow: hidden; font-family: system-ui; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #86bf6c; }
-        .ui-panel {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(12px);
-            padding: 12px; display: flex; flex-wrap: wrap; gap: 8px;
-            justify-content: space-between; z-index: 10; color: #FFE4B5;
-            border-radius: 20px 20px 0 0; font-size: 14px; font-weight: bold;
-        }
-        button {
-            background: #f4a261; border: none; border-radius: 60px;
-            padding: 8px 16px; font-weight: bold; cursor: pointer;
-        }
-        button:active { transform: scale(0.96); }
-        .stat { background: #000000aa; padding: 4px 12px; border-radius: 40px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>НОЧНОЙ ЗАЕЗД</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800;900&family=Golos+Text:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070a12; --ink:#eaf1ff; --muted:#8a93ad;
+    --acid:#c6ff00; --orange:#ff7a00; --cyan:#21e6ff;
+    --magenta:#ff2d7e; --yellow:#ffd60a; --line:rgba(255,122,0,.15);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Golos Text',sans-serif;
+    background:
+      radial-gradient(1100px 520px at 78% -8%, rgba(255,122,0,.20), transparent 60%),
+      radial-gradient(900px 500px at -8% 108%, rgba(33,230,255,.13), transparent 55%),
+      var(--bg);
+    color:var(--ink); min-height:100vh;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:16px 16px calc(16px + env(safe-area-inset-bottom)); overflow-x:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:0;
+    background-image:repeating-linear-gradient(90deg, var(--line) 0 2px, transparent 2px 90px);
+    mask:radial-gradient(circle at 50% 60%, #000 0%, transparent 78%);
+    opacity:.6; pointer-events:none; z-index:0; animation:road 6s linear infinite;
+  }
+  @keyframes road{from{background-position:0 0} to{background-position:-90px 0}}
+  .stage{position:relative; z-index:1; width:100%; max-width:560px; margin-top:8px;}
+  .card{
+    background:linear-gradient(180deg, rgba(14,18,30,.94), rgba(7,10,18,.97));
+    border:1.5px solid rgba(255,122,0,.28); border-radius:20px; padding:26px 22px 28px;
+    box-shadow:0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .tag{display:inline-block; font-family:'Unbounded',sans-serif; font-weight:800; font-size:10.5px; letter-spacing:.24em; text-transform:uppercase; color:#070a12; background:var(--orange); padding:6px 12px; border-radius:999px; margin-bottom:16px; transform:rotate(-2deg);}
+  h1{font-family:'Unbounded',sans-serif; font-weight:900; font-size:clamp(30px,9vw,48px); line-height:.9; letter-spacing:-.02em; margin-bottom:8px; background:linear-gradient(92deg,var(--orange),var(--yellow) 50%,var(--acid)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+  .sub{font-family:'Unbounded',sans-serif; font-weight:700; font-size:13px; letter-spacing:.1em; color:var(--cyan); text-transform:uppercase; margin-bottom:8px;}
+  .hi{font-size:14px; color:var(--acid); font-weight:700; margin-bottom:14px;}
+  .lead{color:var(--muted); font-size:14.5px; line-height:1.55; margin-bottom:18px;}
+  .roster{display:flex; flex-direction:column; gap:8px; margin-bottom:22px;}
+  .pers{font-size:13.5px; line-height:1.4; padding-left:13px; border-left:2px solid var(--orange);}
+  .pers b{font-family:'Unbounded',sans-serif; font-weight:700; font-size:12.5px;}
+  .pers .you{color:var(--acid);} .pers .o{color:var(--cyan);} .pers span.r{color:var(--muted);}
+  .btn{width:100%; cursor:pointer; border:none; font-family:'Unbounded',sans-serif; font-weight:800; font-size:15px; letter-spacing:.02em; color:#070a12; background:var(--orange); border-radius:14px; padding:15px; margin-top:6px; transition:.15s; text-transform:uppercase; box-shadow:0 7px 0 #a35000;}
+  .btn:active{transform:translateY(4px); box-shadow:0 3px 0 #a35000;}
+  .hud{display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; gap:12px;}
+  .crew{font-size:11px; color:var(--muted); line-height:1.45;}
+  .crew b{color:var(--cyan); font-weight:700;}
+  .meter{flex:0 0 140px;}
+  .meter .lab{font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; text-align:right; font-weight:700;}
+  .bar{height:11px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; border:1px solid rgba(255,255,255,.1);}
+  .bar > i{display:block; height:100%; background:linear-gradient(90deg,var(--magenta),var(--orange),var(--acid)); transition:width .5s cubic-bezier(.2,.9,.2,1);}
+  .scene-text{font-size:16.5px; line-height:1.62; margin-bottom:24px; min-height:84px;}
+  .scene-text .nm{font-family:'Unbounded',sans-serif; font-weight:700; font-size:14.5px;}
+  .scene-text .me{color:var(--acid);} .scene-text .fr{color:var(--cyan);}
+  .scene-text em{color:var(--yellow); font-style:normal; font-weight:700;}
+  .choice{display:block; width:100%; text-align:left; cursor:pointer; background:rgba(255,255,255,.04); border:1.5px solid rgba(255,255,255,.12); border-radius:14px; padding:14px 16px; margin-bottom:10px; color:var(--ink); font-family:inherit; font-size:15px; font-weight:500; transition:.16s;}
+  .choice:active{border-color:var(--orange); background:rgba(255,122,0,.12);}
+  .choice::before{content:"▸"; color:var(--orange); font-weight:900; margin-right:9px;}
+  .ending h2{font-family:'Unbounded',sans-serif; font-weight:900; font-size:clamp(24px,7vw,38px); line-height:1; margin-bottom:14px; letter-spacing:-.01em;}
+  .ending .verdict{font-size:15.5px; line-height:1.6; color:var(--muted); margin-bottom:22px;}
+  .restart{background:var(--cyan); box-shadow:0 7px 0 #168fa0;}
+  .restart:active{box-shadow:0 3px 0 #168fa0;}
+  .fade{animation:fade .4s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+</style>
 </head>
 <body>
-<div>
-    <canvas id="gameCanvas"></canvas>
-    <div class="ui-panel">
-        <div class="stat">💰 <span id="gold">500</span></div>
-        <div class="stat">⚔️ <span id="weapons">0</span></div>
-        <div class="stat">⭐ <span id="reputation">0</span></div>
-        <button id="sellBtn">Продать всё</button>
-        <button id="upgradeBtn">📈 Кузнец +1 (50💰)</button>
-    </div>
-</div>
+<div class="stage"><div class="card" id="card"></div></div>
 <script>
-    // ========== ОСНОВНАЯ ИГРА ==========
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-    
-    let gold = 500;
-    let weapons = 0;
-    let reputation = 0;
-    let blacksmiths = 1;
-    
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        draw();
-    }
-    window.addEventListener('resize', resize);
-    
-    function draw() {
-        ctx.fillStyle = '#86bf6c';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#6b4c3b';
-        ctx.fillRect(canvas.width/2-50, canvas.height/2-50, 100, 80);
-        ctx.fillStyle = '#e9c58b';
-        ctx.font = "30px system-ui";
-        ctx.fillText("🔨", canvas.width/2-20, canvas.height/2+10);
-        ctx.fillStyle = '#f7c873';
-        for(let i=0; i<blacksmiths; i++) {
-            ctx.beginPath();
-            ctx.arc(100 + i*40, canvas.height-80, 20, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = '#000';
-            ctx.fillText("👨‍🏭", 85 + i*40, canvas.height-85);
-            ctx.fillStyle = '#f7c873';
-        }
-    }
-    
-    function updateUI() {
-        document.getElementById('gold').innerText = Math.floor(gold);
-        document.getElementById('weapons').innerText = Math.floor(weapons);
-        document.getElementById('reputation').innerText = Math.floor(reputation);
-        document.getElementById('upgradeBtn').innerHTML = `📈 Кузнец +1 (${Math.floor(50 + blacksmiths*15)}💰)`;
-    }
-    
-    function sellAll() {
-        if(weapons > 0) {
-            let price = 12 + Math.floor(reputation / 10);
-            let total = weapons * price;
-            gold += total;
-            weapons = 0;
-            tg.HapticFeedback.notificationOccurred('success');
-            updateUI();
-            draw();
-        }
-    }
-    
-    function buyBlacksmith() {
-        let cost = 50 + blacksmiths * 15;
-        if(gold >= cost) {
-            gold -= cost;
-            blacksmiths++;
-            updateUI();
-            draw();
-        }
-    }
-    
-    // Ковка оружия каждые 2 секунды
-    setInterval(() => {
-        let crafted = blacksmiths;
-        weapons += crafted;
-        updateUI();
-        draw();
-    }, 2000);
-    
-    document.getElementById('sellBtn').onclick = sellAll;
-    document.getElementById('upgradeBtn').onclick = buyBlacksmith;
-    
-    resize();
-    updateUI();
-    // ================== ЧАСТЬ 2: ПОЛНОЕ РАСШИРЕНИЕ ==================
-// ----- НОВЫЕ РЕСУРСЫ -----
-let wood = 0;
-let coal = 0;
-let crystals = 0;
-let mana = 0;
-let steel = 0;
-let lumberjacks = 0;
-let charcoalBurners = 0;
-let alchemyLevel = 0;
-let mercenaries = 0;
-let monsters = [];
-let monsterWave = 0;
-let guildSmith = 0;
-let guildTrade = 0;
-let guildMagic = 0;
-let reputationGnome = 0;
-let ships = [];
-let lastShipSpawn = Date.now();
-
-// ----- НОВЫЕ NPC (ЛЕСОРУБЫ, ЗАЩИТНИКИ) -----
-let extraNPCs = [];
-
-function spawnExtraNPCs() {
-    extraNPCs = [];
-    for(let i=0; i<lumberjacks; i++) {
-        extraNPCs.push({
-            type: 'lumberjack', x: 150 + Math.random() * 300, y: 80 + Math.random() * 200,
-            targetX: 400, targetY: 120, emotion: '🪓'
-        });
-    }
-    for(let i=0; i<mercenaries; i++) {
-        extraNPCs.push({
-            type: 'defender', x: 400 + Math.random() * 200, y: 200 + Math.random() * 150,
-            targetX: 500, targetY: 300, emotion: '⚔️'
-        });
-    }
+/* ===== TELEGRAM SDK ===== */
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+let TG_NAME = "";
+if(tg){
+  try{
+    tg.ready(); tg.expand();
+    tg.setHeaderColor && tg.setHeaderColor('#070a12');
+    tg.setBackgroundColor && tg.setBackgroundColor('#070a12');
+    tg.disableVerticalSwipes && tg.disableVerticalSwipes();
+    const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+    if(u && u.first_name) TG_NAME = u.first_name;
+  }catch(e){}
+}
+function buzz(kind){
+  if(!tg || !tg.HapticFeedback) return;
+  try{
+    if(kind==='ok') tg.HapticFeedback.notificationOccurred('success');
+    else if(kind==='bad') tg.HapticFeedback.notificationOccurred('error');
+    else tg.HapticFeedback.impactOccurred('medium');
+  }catch(e){}
 }
 
-// ----- РАСЧЁТ СТОИМОСТИ УЛУЧШЕНИЙ -----
-function woodcutterCost() { return 80 + lumberjacks * 25; }
-function charcoalCost() { return 100 + charcoalBurners * 40; }
-function alchemyCost() { return 150 + alchemyLevel * 90; }
-function mercenaryCost() { return 120 + mercenaries * 60; }
-function guildSmithCost() { return 200 + guildSmith * 20; }
-function guildTradeCost() { return 250 + guildTrade * 25; }
-function guildMagicCost() { return 300 + guildMagic * 30; }
+/* ===== БАНДА ===== */
+const N = {
+  S:`<span class="nm me">Семён</span>`, M:`<span class="nm fr">Макс</span>`,
+  SA:`<span class="nm fr">Саша</span>`, NK:`<span class="nm fr">Никита</span>`,
+  G:`<span class="nm fr">Горыня</span>`, Z:`<span class="nm fr">Зилотов</span>`
+};
+const S = { hype:50 };
+const $ = id=>document.getElementById(id);
+const card = $('card');
+function t(str){return str.replace(/\{S\}/g,N.S).replace(/\{M\}/g,N.M).replace(/\{SA\}/g,N.SA).replace(/\{NK\}/g,N.NK).replace(/\{G\}/g,N.G).replace(/\{Z\}/g,N.Z);}
 
-// ----- ПОКУПКА УЛУЧШЕНИЙ -----
-function buyWoodcutter() {
-    let cost = woodcutterCost();
-    if(gold >= cost) { gold -= cost; lumberjacks++; spawnExtraNPCs(); updateUIExtended(); drawExtended(); }
-}
-function buyCharcoalBurner() {
-    let cost = charcoalCost();
-    if(gold >= cost) { gold -= cost; charcoalBurners++; updateUIExtended(); }
-}
-function buyAlchemy() {
-    let cost = alchemyCost();
-    if(gold >= cost) { gold -= cost; alchemyLevel++; updateUIExtended(); }
-}
-function buyMercenary() {
-    let cost = mercenaryCost();
-    if(gold >= cost) { gold -= cost; mercenaries++; spawnExtraNPCs(); updateUIExtended(); drawExtended(); }
-}
-function buyGuildSmith() {
-    let cost = guildSmithCost();
-    if(gold >= cost) { gold -= cost; guildSmith = Math.min(100, guildSmith+10); updateUIExtended(); }
-}
-function buyGuildTrade() {
-    let cost = guildTradeCost();
-    if(gold >= cost) { gold -= cost; guildTrade = Math.min(100, guildTrade+10); updateUIExtended(); }
-}
-function buyGuildMagic() {
-    let cost = guildMagicCost();
-    if(gold >= cost) { gold -= cost; guildMagic = Math.min(100, guildMagic+10); updateUIExtended(); }
+/* ===== ТИТУЛКА ===== */
+function title(){
+  S.hype=50;
+  if(tg && tg.BackButton) tg.BackButton.hide();
+  card.className="card fade";
+  card.innerHTML=`
+    <span class="tag">★ сюжетный режим</span>
+    <h1>НОЧНОЙ<br>ЗАЕЗД</h1>
+    <div class="sub">пятнашка Макса · одна ночь</div>
+    ${TG_NAME?`<div class="hi">здарова, ${TG_NAME}! 🤝 сегодня ты — Семён</div>`:''}
+    <p class="lead">Гаражи, ночь, прогретая ВАЗ 2115 и банда в сборе. Один выезд, сто поворотов сюжета. Куда вывезет ночь — решаешь ты.</p>
+    <div class="roster">
+      <div class="pers"><b class="you">Семён</b> <span class="r">— ты, спортсмен. Догонит, вынесет, перепрыгнет.</span></div>
+      <div class="pers"><b class="o">Макс</b> <span class="r">— за рулём пятнашки. Без него никуда.</span></div>
+      <div class="pers"><b class="o">Саша</b> <span class="r">— что трогает — ломается.</span></div>
+      <div class="pers"><b class="o">Никита</b> <span class="r">— самый молодой, всему верит.</span></div>
+      <div class="pers"><b class="o">Горыня</b> <span class="r">— шкаф. Толкает, держит, ломает заборы.</span></div>
+      <div class="pers"><b class="o">Зилотов</b> <span class="r">— рыжий магнит для дичи.</span></div>
+    </div>
+    <button class="btn" id="go">Завести двигатель →</button>`;
+  $('go').onclick=()=>{buzz('hit'); render('intro');};
 }
 
-// ----- ПАССИВНАЯ ДОБЫЧА -----
-function passiveExtended() {
-    let delta = 0.05;
-    if(lumberjacks > 0) wood += lumberjacks * 1.8 * delta;
-    if(charcoalBurners > 0 && wood > 0) {
-        let usedWood = Math.min(wood, charcoalBurners * 1.5 * delta);
-        wood -= usedWood;
-        coal += usedWood * 0.8;
-    }
-    if(alchemyLevel > 0 && coal > 0) {
-        let conversion = Math.min(coal, alchemyLevel * 1.2 * delta);
-        coal -= conversion;
-        crystals += conversion * 0.15;
-        mana = Math.min(mana + crystals * 0.05 * delta, 100);
-    }
-    // Бонусы гильдий
-    if(guildSmith > 0) blacksmiths = Math.max(1, blacksmiths + guildSmith/200);
-    if(guildTrade > 0) reputation += guildTrade/100;
-    if(guildMagic > 0) mana = Math.min(100, mana + guildMagic/50);
+function hud(){
+  const pct=Math.max(0,Math.min(100,S.hype));
+  return `<div class="hud"><div class="crew">ЗА РУЛЁМ: <b>Макс</b> · ТЫ: <b>Семён</b></div>
+    <div class="meter"><div class="lab">уровень угара</div>
+    <div class="bar"><i style="width:${pct}%"></i></div></div></div>`;
 }
 
-// ----- МОНСТРЫ -----
-function trySpawnMonsters() {
-    if(monsterWave > 0) return;
-    if(Math.random() < 0.15 && mercenaries < 5) {
-        let waveSize = 1 + Math.floor(Math.random() * 3);
-        for(let i=0;i<waveSize;i++) {
-            let x = Math.random() < 0.5 ? 20 : canvas.width-60;
-            let y = 100 + Math.random() * (canvas.height-200);
-            monsters.push({ x: x, y: y, hp: 20 + Math.floor(Math.random()*30), maxHp: 40, targetX: canvas.width/2, targetY: canvas.height/2 });
-        }
-        monsterWave = monsters.length;
-        tg.showPopup({ title: "⚠️ Монстры!", message: `Появилось ${monsters.length} врагов!` });
-    }
+function render(key){
+  const sc=SCENES[key]; if(!sc) return;
+  if(typeof sc.hype==='number') S.hype+=sc.hype;
+  if(tg && tg.BackButton){ tg.BackButton.show(); tg.BackButton.onClick(title); }
+  if(sc.ending){
+    buzz(S.hype>=55?'ok':'bad');
+    card.className="card fade ending";
+    card.innerHTML=`${hud()}
+      <span class="tag" style="background:${sc.color||'var(--yellow)'}">${sc.badge||'КОНЕЦ'}</span>
+      <h2 style="color:${sc.color||'var(--yellow)'}">${t(sc.title)}</h2>
+      <p class="verdict">${t(sc.text)}</p>
+      <button class="btn restart" id="rs">Ещё заезд ↺</button>`;
+    $('rs').onclick=()=>{buzz('hit'); title();};
+    return;
+  }
+  let html=hud()+`<p class="scene-text">${t(sc.text)}</p>`;
+  sc.choices.forEach(c=>{html+=`<button class="choice" data-n="${c.next}">${t(c.label)}</button>`;});
+  card.className="card fade"; card.innerHTML=html;
+  card.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{buzz('hit'); render(b.dataset.n);});
+  window.scrollTo(0,0);
 }
 
-function battleStep() {
-    if(monsters.length === 0) return;
-    for(let m of monsters) {
-        let dx = m.targetX - m.x, dy = m.targetY - m.y;
-        let dist = Math.hypot(dx,dy);
-        if(dist > 15) {
-            m.x += (dx/dist) * 1.2;
-            m.y += (dy/dist) * 1.2;
-        } else {
-            weapons = Math.max(0, weapons - 3);
-            gold = Math.max(0, gold - 5);
-            m.hp -= mercenaries * 8;
-            if(m.hp <= 0) {
-                monsters = monsters.filter(mo => mo !== m);
-                gold += 30 + Math.floor(Math.random()*30);
-                crystals += 1;
-                tg.HapticFeedback.impactOccurred('heavy');
-            }
-        }
-    }
-    if(monsters.length === 0) monsterWave = 0;
-}
-
-// ----- ТОРГОВЫЕ КОРАБЛИ -----
-function spawnShip() {
-    let now = Date.now();
-    if(ships.length === 0 && now - lastShipSpawn > 120000) {
-        let types = ['wood', 'coal', 'crystals', 'steel'];
-        let type = types[Math.floor(Math.random()*types.length)];
-        let amount = 20 + Math.floor(Math.random()*60);
-        let price = amount * (type==='crystals' ? 8 : 3);
-        ships.push({ type, goods: amount, price, arriveTime: now + 30000 });
-        lastShipSpawn = now;
-        tg.showPopup({ title: "🚢 Торговый корабль!", message: `Прибывает с ${type} через 30 сек` });
-    }
-}
-
-function buyFromShip() {
-    if(ships.length === 0) return;
-    let ship = ships[0];
-    if(gold >= ship.price) {
-        gold -= ship.price;
-        if(ship.type === 'wood') wood += ship.goods;
-        if(ship.type === 'coal') coal += ship.goods;
-        if(ship.type === 'crystals') crystals += ship.goods;
-        if(ship.type === 'steel') steel += ship.goods;
-        ships.shift();
-        updateUIExtended();
-        tg.HapticFeedback.impactOccurred('light');
-    } else tg.showPopup({ title: "Не хватает", message: `Нужно ${ship.price}💰` });
-}
-
-// ----- МУЛЬТЯШНАЯ ОТРИСОВКА (ПЕРЕОПРЕДЕЛЯЕМ draw) -----
-const originalDraw = draw;
-drawExtended = function() {
-    if(!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Трава с цветочками
-    ctx.fillStyle = '#9bcd6c';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for(let i=0;i<60;i++) {
-        ctx.fillStyle = '#e6c229';
-        ctx.beginPath();
-        ctx.arc(30+i*97, canvas.height-40, 5, 0, Math.PI*2);
-        ctx.fill();
-    }
-    // Дорожка
-    ctx.fillStyle = '#b97f44';
-    for(let i=0;i<20;i++) ctx.fillRect(i*70, canvas.height-70, 55, 12);
-    // Наковальня
-    ctx.fillStyle = '#6b4c3b';
-    ctx.fillRect(canvas.width/2-50, canvas.height/2-50, 100, 80);
-    ctx.fillStyle = '#e9c58b';
-    ctx.font = "30px system-ui";
-    ctx.fillText("🔨", canvas.width/2-20, canvas.height/2+10);
-    // Прилавок
-    ctx.fillStyle = '#b38b5d';
-    ctx.fillRect(canvas.width-150, canvas.height-150, 90, 55);
-    ctx.fillStyle = '#fadf9e';
-    ctx.fillText("🏪", canvas.width-120, canvas.height-110);
-    // Лесопилка
-    if(lumberjacks > 0) {
-        ctx.fillStyle = '#7c5e3a';
-        ctx.fillRect(50, 30, 80, 60);
-        ctx.fillStyle = '#dec97a';
-        ctx.fillText("🪵", 80, 75);
-    }
-    // Алхимическая башня
-    if(alchemyLevel > 0) {
-        ctx.fillStyle = '#8b6b9d';
-        ctx.fillRect(canvas.width-120, 40, 60, 80);
-        ctx.fillStyle = '#e0b0ff';
-        ctx.fillText("🧪", canvas.width-95, 90);
-    }
-    // Обычные NPC (кузнецы)
-    for(let i=0; i<blacksmiths; i++) {
-        let x = 100 + (i%5)*45;
-        let y = canvas.height-80 - Math.floor(i/5)*60;
-        ctx.fillStyle = '#f7c873';
-        ctx.beginPath();
-        ctx.ellipse(x, y, 16, 18, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(x-6, y-6, 3, 0, Math.PI*2);
-        ctx.arc(x+6, y-6, 3, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.arc(x-7, y-8, 1, 0, Math.PI*2);
-        ctx.arc(x+5, y-8, 1, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = '#5e2a2a';
-        ctx.beginPath();
-        ctx.arc(x, y+2, 6, 0, Math.PI);
-        ctx.fill();
-        ctx.fillStyle = '#2c1e0e';
-        ctx.font = "20px system-ui";
-        ctx.fillText("👨‍🏭", x-12, y-18);
-    }
-    // Дополнительные NPC (лесорубы, защитники)
-    for(let n of extraNPCs) {
-        ctx.fillStyle = n.type === 'lumberjack' ? '#8bcd6e' : '#b0c4de';
-        ctx.beginPath();
-        ctx.ellipse(n.x, n.y, 14, 16, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(n.x-5, n.y-4, 2.5, 0, Math.PI*2);
-        ctx.arc(n.x+5, n.y-4, 2.5, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = '#5e2a2a';
-        ctx.beginPath();
-        ctx.arc(n.x, n.y+2, 4, 0, Math.PI);
-        ctx.fill();
-        ctx.font = "20px system-ui";
-        ctx.fillStyle = '#2c1e0e';
-        ctx.fillText(n.emotion, n.x-12, n.y-18);
-    }
-    // Монстры
-    for(let m of monsters) {
-        ctx.fillStyle = '#6b2e2e';
-        ctx.beginPath();
-        ctx.ellipse(m.x, m.y, 18, 20, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = '#ffaa66';
-        ctx.font = "bold 24px system-ui";
-        ctx.fillText("👾", m.x-14, m.y-6);
-        ctx.fillStyle = 'white';
-        ctx.font = "12px monospace";
-        ctx.fillText(`${Math.floor(m.hp)}/${m.maxHp}`, m.x-18, m.y+15);
-    }
-    // Корабль
-    if(ships.length > 0) {
-        ctx.fillStyle = '#6b8c5c';
-        ctx.fillRect(canvas.width-100, 50, 80, 40);
-        ctx.fillStyle = '#f0c674';
-        ctx.font = "24px system-ui";
-        ctx.fillText("🚢", canvas.width-75, 85);
-        ctx.fillStyle = '#fff';
-        ctx.font = "10px monospace";
-        ctx.fillText("Купить за "+ships[0].price+"💰", canvas.width-95, 105);
-    }
+/* ===== СЮЖЕТ ===== */
+const SCENES = {
+  intro:{text:`Гаражи, полночь. {M} подкатывает на прогретой пятнашке, движок тарахтит как родной. Банда заваливается внутрь. И тут {S} вспоминает: {SA} сегодня сломал его любимую удочку. {SA} сразу: «Да она сама! Я только взял подержать!»`,
+    choices:[{label:`«Забей, погнали кататься»`,next:"ride1"},{label:`«Не, {SA}, мы это так не оставим»`,next:"udochka"}]},
+  udochka:{text:`{S} подходит к {SA} вплотную. {G} ржёт сзади: «Ну всё, спортсмен зол.» {SA} вжимается в сиденье: «Я куплю новую! Завтра! Когда-нибудь!»`,hype:6,
+    choices:[{label:`«Едем за удочкой прямо сейчас»`,next:"shop"},{label:`«Ладно, должник. Поехали»`,next:"ride1"}]},
+  shop:{text:`Круглосуточный рыболовный — единственный на город. {SA} с кислой миной достаёт мятые купюры. Пока он платит, {Z} замечает за магазином толпу и мигалки: «Пацаны! Там чёт происходит! Го глянем!»`,hype:8,
+    choices:[{label:`«Берём удочку и валим»`,next:"ride1"},{label:`«Зилотов прав, глянем»`,next:"crowd"}]},
+  crowd:{text:`Подъезжаете — ночные покатушки, сходка тачек. Парень у тюнингованной машины тычет в пятнашку {M}: «Это ЭТО приехало гоняться? Прокатимся до светофора?»`,hype:12,
+    choices:[{label:`«{M}, покажи им пятнашку!»`,next:"race"},{label:`«Мы мимо, удачи»`,next:"cruise"}]},
+  ride1:{text:`Пятнашка летит по пустому ночному городу, из колонок орёт музыка, {NK} подпевает не зная слов. {Z} высовывается с заднего сиденья: «Пацаны! Я знаю где сегодня реальный движ! Поворачивай!»`,hype:5,
+    choices:[{label:`«Едем за Зилотовым»`,next:"crowd"},{label:`«Твои движи добром не кончаются. Катаемся»`,next:"cruise"}]},
+  cruise:{text:`Спокойный круиз, окна нараспашку, кайф. И тут пятнашка <em>кхе-кхе-тыдых</em> — и глохнет посреди пустой дороги. {M} крутит ключ — тишина. {SA}: «Я ничего не трогал... почти.»`,hype:3,
+    choices:[{label:`«{G}, {S} — толкаем!»`,next:"push"},{label:`«{M} лезет под капот, Саша НЕ помогает»`,next:"hood"}]},
+  push:{text:`{G} упирается в багажник как танк, {S} рядом — два кабана толкают пятнашку под горку. {M} орёт «бросаю сцепление!». Движок чихает... и тут {Z}: «Можно я тоже подтолкну?» — и спотыкается прямо под колёса.`,hype:7,
+    choices:[{label:`«{S} в прыжке выдёргивает рыжего!»`,next:"hero_save"},{label:`«Все тормозят, спасаем Зилотова»`,next:"hero_save"}]},
+  hood:{text:`{M} ныряет под капот с фонариком. «Так, провод отошёл, ща...» И тут {SA}, которому сказали НЕ ЛЕЗТЬ, тянется «помочь» и отрывает трубку. <em>Пшшш.</em> {M} медленно поднимает голову. {SA}: «Это и так болталось!»`,hype:9,
+    choices:[{label:`«{S} оттаскивает Сашу, чинят с Максом»`,next:"fix"},{label:`«Зовём Горыню толкать до сервиса»`,next:"push"}]},
+  hero_save:{text:`{S} срывается с места и в красивом прыжке выдёргивает {Z} из-под колёс. Пятнашка с рёвом заводится, банда хлопает. {G}: «Вот это спорт! Семён, ты машина!» {Z}: «Я бы и сам отскочил... наверное.»`,hype:14,
+    choices:[{label:`«Догоняем тачку и едем дальше в ночь»`,next:"final_cruise"}]},
+  fix:{text:`{S} держит {SA} за шкирку на безопасном расстоянии, пока {M} возвращает трубку на место. Движок мурчит. {M}: «{SA}, ещё раз тронешь машину — поедешь в багажнике.» {SA}: «Понял. Молчу.»`,hype:8,
+    choices:[{label:`«Поехали, ночь молодая»`,next:"final_cruise"}]},
+  race:{text:`{M} жмёт газ, пятнашка ревёт всем что есть. До светофора ноздря в ноздрю! На последних метрах тюнинг глохнет, а пятнашка с тарахтением вырывается вперёд. ПОБЕДА. {NK} визжит, {G} трясёт машину так, что она качается.`,hype:20,
+    choices:[{label:`«Уезжаем красиво, легендами»`,next:"race_end"},{label:`«Остаёмся, {Z} зовёт на ещё заезд»`,next:"final_cruise"}]},
+  final_cruise:{text:`Под утро пятнашка катит по набережной, небо розовеет. {NK} спит на плече у {G}. {Z}, конечно: «Пацаны... а есть идея на завтра...» {M} смотрит на {S} в зеркало: «Ну чё, командир, как закончим эту?»`,hype:6,
+    choices:[{label:`«Глушим мотор, по домам»`,next:"good_end"},{label:`«За пирожками на круглосуточную!»`,next:"pirozhki_end"},{label:`«Слушаем идею Зилотова (ошибка?)»`,next:"zil_end"}]},
+  race_end:{ending:true,badge:"ЛЕГЕНДА РАЙОНА",color:"var(--acid)",title:`Пятнашка, которая всех уделала`,hype:18,
+    text:`Старая ВАЗ 2115 {M} обогнала тюнинг на глазах у всей сходки. Теперь о вас говорят во всех гаражах. {SA} рассказывает историю так, будто сам сидел за рулём. {S} — штурман года. Машину {M} больше не зовут «корыто» — только «Молния».`},
+  good_end:{ending:true,badge:"ХОРОШИЙ ВЕЧЕР",color:"var(--cyan)",title:`Просто отличная ночь`,hype:5,
+    text:`Никто не пострадал, пятнашка цела, удочка отомщена, {SA} весь вечер вёл себя прилично (рекорд). Разъехались по домам на рассвете. Иногда лучшая ночь — это когда все доехали живые и ржущие.`},
+  pirozhki_end:{ending:true,badge:"НАРОДНЫЕ ГЕРОИ",color:"var(--yellow)",title:`Налёт на круглосуточную`,hype:12,
+    text:`Вы скупили все горячие пирожки. {G} взял восемь, {NK} — два и сразу обжёгся. {S} честно поделил последний на всех. Тётя Люда теперь держит для вас лучшие. Ночь, которая пахнет ливером и победой.`},
+  zil_end:{ending:true,badge:"А МЫ ГОВОРИЛИ",color:"var(--magenta)",title:`Зря послушали рыжего`,hype:-10,
+    text:`Идея {Z} звучала гениально ровно до момента, когда пятнашка застряла в грязи на поле, {SA} утопил кроссовок, а {NK} клялся, что видел инопланетян. {S} вытаскивал всех на руках. Зачем поехали — никто не помнит. Но {Z} уже придумал следующую идею. Банда обречена. И это прекрасно.`}
 };
 
-// ----- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА -----
-function updateUIExtended() {
-    document.getElementById('gold').innerText = Math.floor(gold);
-    document.getElementById('weapons').innerText = Math.floor(weapons);
-    document.getElementById('reputation').innerText = Math.floor(reputation);
-    let upgradeBtn = document.getElementById('upgradeBtn');
-    if(upgradeBtn) upgradeBtn.innerHTML = `📈 Кузнец +1 (${Math.floor(50 + blacksmiths*15)}💰)`;
-    
-    // Добавляем новые кнопки, если ещё нет
-    let panel = document.querySelector('.ui-panel');
-    if(panel && !document.getElementById('woodcutBtn')) {
-        let btnHTML = `
-            <button id="woodcutBtn">🪓 Лесоруб (${woodcutterCost()}💰)</button>
-            <button id="charcoalBtn">🔥 Углежог (${charcoalCost()}💰)</button>
-            <button id="alchemyBtn">🧪 Алхимик (${alchemyCost()}💰)</button>
-            <button id="mercBtn">⚔️ Наёмник (${mercenaryCost()}💰)</button>
-            <button id="guildSmithBtn">🏅 Гильдия кузн. (${guildSmithCost()}💰)</button>
-            <button id="guildTradeBtn">📦 Гильдия торгов. (${guildTradeCost()}💰)</button>
-            <button id="guildMagicBtn">🔮 Гильдия магов (${guildMagicCost()}💰)</button>
-            <button id="shipBtn">🚢 Купить с корабля</button>
-        `;
-        panel.insertAdjacentHTML('beforeend', btnHTML);
-        document.getElementById('woodcutBtn').onclick = buyWoodcutter;
-        document.getElementById('charcoalBtn').onclick = buyCharcoalBurner;
-        document.getElementById('alchemyBtn').onclick = buyAlchemy;
-        document.getElementById('mercBtn').onclick = buyMercenary;
-        document.getElementById('guildSmithBtn').onclick = buyGuildSmith;
-        document.getElementById('guildTradeBtn').onclick = buyGuildTrade;
-        document.getElementById('guildMagicBtn').onclick = buyGuildMagic;
-        document.getElementById('shipBtn').onclick = buyFromShip;
-    }
-    // Обновляем цены на кнопках
-    if(document.getElementById('woodcutBtn')) document.getElementById('woodcutBtn').innerHTML = `🪓 Лесоруб (${woodcutterCost()}💰)`;
-    if(document.getElementById('charcoalBtn')) document.getElementById('charcoalBtn').innerHTML = `🔥 Углежог (${charcoalCost()}💰)`;
-    if(document.getElementById('alchemyBtn')) document.getElementById('alchemyBtn').innerHTML = `🧪 Алхимик (${alchemyCost()}💰)`;
-    if(document.getElementById('mercBtn')) document.getElementById('mercBtn').innerHTML = `⚔️ Наёмник (${mercenaryCost()}💰)`;
-    if(document.getElementById('guildSmithBtn')) document.getElementById('guildSmithBtn').innerHTML = `🏅 Гильдия кузн. (${guildSmithCost()}💰)`;
-    if(document.getElementById('guildTradeBtn')) document.getElementById('guildTradeBtn').innerHTML = `📦 Гильдия торгов. (${guildTradeCost()}💰)`;
-    if(document.getElementById('guildMagicBtn')) document.getElementById('guildMagicBtn').innerHTML = `🔮 Гильдия магов (${guildMagicCost()}💰)`;
-    
-    // Отображаем новые ресурсы в панели
-    let statsDiv = document.querySelector('.ui-panel');
-    if(statsDiv && !document.getElementById('woodStat')) {
-        let resourceHTML = `<div class="stat">🪵 <span id="woodStat">0</span></div>
-                           <div class="stat">🪨 <span id="coalStat">0</span></div>
-                           <div class="stat">🔮 <span id="crystalStat">0</span></div>
-                           <div class="stat">✨ <span id="manaStat">0</span></div>`;
-        statsDiv.insertAdjacentHTML('afterbegin', resourceHTML);
-    }
-    if(document.getElementById('woodStat')) document.getElementById('woodStat').innerText = Math.floor(wood);
-    if(document.getElementById('coalStat')) document.getElementById('coalStat').innerText = Math.floor(coal);
-    if(document.getElementById('crystalStat')) document.getElementById('crystalStat').innerText = Math.floor(crystals);
-    if(document.getElementById('manaStat')) document.getElementById('manaStat').innerText = Math.floor(mana);
-}
-
-// ----- ДВИЖЕНИЕ НОВЫХ NPC -----
-function moveExtraNPCs() {
-    for(let n of extraNPCs) {
-        let dx = n.targetX - n.x, dy = n.targetY - n.y;
-        let dist = Math.hypot(dx,dy);
-        if(dist > 5) {
-            n.x += (dx/dist) * 1.5;
-            n.y += (dy/dist) * 1.5;
-        } else {
-            if(n.type === 'lumberjack') {
-                wood += 1;
-                n.emotion = '🪵';
-                setTimeout(() => { if(extraNPCs.includes(n)) n.emotion = '🪓'; }, 300);
-            }
-            if(n.type === 'defender') {
-                n.emotion = '🛡️';
-            }
-            if(Math.random()<0.02) n.targetX = 100 + Math.random() * (canvas.width-200);
-        }
-    }
-}
-
-// ----- ПЕРЕОПРЕДЕЛЯЕМ ИНТЕРВАЛЫ -----
-const oldInterval = setInterval;
-clearInterval(window._mainInterval);
-window._mainInterval = setInterval(() => {
-    let crafted = blacksmiths;
-    weapons += crafted;
-    passiveExtended();
-    trySpawnMonsters();
-    battleStep();
-    spawnShip();
-    moveExtraNPCs();
-    updateUIExtended();
-    drawExtended();
-}, 2000);
-
-// Инициализация
-spawnExtraNPCs();
-updateUIExtended();
-drawExtended();
-// ================== КОНЕЦ ЧАСТИ 2 ==================
-    // ================== ЧАСТЬ 3: ПРЕМИУМ ГРАФИКА И UI ==================
-// ----- СТИЛИ ДЛЯ ДОРОГИХ КНОПОК -----
-const style = document.createElement('style');
-style.textContent = `
-    @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap');
-    * { font-family: 'Inter', system-ui, -apple-system; }
-    .premium-panel {
-        background: linear-gradient(135deg, rgba(20,25,35,0.95) 0%, rgba(10,15,25,0.98) 100%);
-        backdrop-filter: blur(20px);
-        border-radius: 32px;
-        border: 1px solid rgba(255,215,0,0.3);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
-    }
-    .premium-btn {
-        background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
-        border: none;
-        border-radius: 60px;
-        padding: 10px 24px;
-        font-weight: 700;
-        font-size: 14px;
-        color: white;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        box-shadow: 0 4px 15px rgba(241,39,17,0.4);
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-    .premium-btn:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(241,39,17,0.5); }
-    .premium-btn-secondary {
-        background: linear-gradient(135deg, #2c3e50 0%, #1a2632 100%);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        border: 1px solid rgba(255,215,0,0.2);
-    }
-    .stat-card {
-        background: rgba(0,0,0,0.6);
-        backdrop-filter: blur(8px);
-        border-radius: 40px;
-        padding: 8px 18px;
-        border: 1px solid rgba(255,215,0,0.25);
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-    .upgrade-grid {
-        display: flex;
-        gap: 12px;
-        overflow-x: auto;
-        padding: 8px 4px;
-    }
-    .upgrade-card-premium {
-        background: linear-gradient(145deg, #1e2a3a, #0f1722);
-        border-radius: 28px;
-        padding: 12px 16px;
-        min-width: 110px;
-        text-align: center;
-        border: 1px solid rgba(255,215,0,0.2);
-        box-shadow: 0 6px 14px rgba(0,0,0,0.3);
-        transition: 0.1s linear;
-        cursor: pointer;
-    }
-    .upgrade-card-premium:active { transform: scale(0.97); }
-    .gold-text { color: #f5b042; text-shadow: 0 0 5px rgba(245,176,66,0.5); }
-    .resource-icon { font-size: 20px; margin-right: 6px; vertical-align: middle; }
-`;
-document.head.appendChild(style);
-
-// ----- ЗАМЕНЯЕМ UI НА ПРЕМИУМ -----
-function upgradeToPremiumUI() {
-    const oldPanel = document.querySelector('.ui-panel');
-    if(!oldPanel) return;
-    oldPanel.style.background = 'linear-gradient(135deg, rgba(20,25,35,0.95) 0%, rgba(10,15,25,0.98) 100%)';
-    oldPanel.style.backdropFilter = 'blur(20px)';
-    oldPanel.style.borderRadius = '32px';
-    oldPanel.style.border = '1px solid rgba(255,215,0,0.3)';
-    oldPanel.style.padding = '14px 18px';
-    
-    // Все кнопки делаем премиум
-    document.querySelectorAll('button').forEach(btn => {
-        if(!btn.classList.contains('premium-btn')) {
-            btn.classList.add('premium-btn');
-            if(btn.id.includes('guild') || btn.id.includes('ship')) btn.classList.add('premium-btn-secondary');
-        }
-    });
-    document.querySelectorAll('.stat').forEach(stat => stat.classList.add('stat-card'));
-    document.querySelectorAll('.upgrade-card').forEach(card => card.classList.add('upgrade-card-premium'));
-}
-
-// ----- УЛУЧШЕННАЯ ОТРИСОВКА (тени, градиенты, блики) -----
-const premiumDraw = function() {
-    if(!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Градиентный фон
-    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    grad.addColorStop(0, '#1a472a');
-    grad.addColorStop(1, '#0d2a1a');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Солнечные блики
-    ctx.globalAlpha = 0.15;
-    for(let i=0;i<3;i++) {
-        ctx.beginPath();
-        ctx.arc(100 + i*250, 80, 60, 0, Math.PI*2);
-        ctx.fillStyle = '#ffdd88';
-        ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    
-    // Трава с текстурой
-    ctx.fillStyle = '#3c8c40';
-    for(let i=0;i<200;i++) {
-        ctx.fillRect(i*30, canvas.height-85, 15, 8);
-    }
-    
-    // Тени зданий
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 15;
-    ctx.shadowOffsetX = 4;
-    ctx.shadowOffsetY = 4;
-    
-    // Наковальня (золотая)
-    ctx.fillStyle = '#8b5a2b';
-    ctx.fillRect(canvas.width/2-55, canvas.height/2-55, 110, 90);
-    ctx.fillStyle = '#d4a373';
-    ctx.fillRect(canvas.width/2-45, canvas.height/2-45, 90, 70);
-    ctx.fillStyle = '#f5b042';
-    ctx.font = "bold 40px system-ui";
-    ctx.fillText("🔨", canvas.width/2-25, canvas.height/2+10);
-    
-    // Прилавок с золотом
-    ctx.fillStyle = '#b87c4f';
-    ctx.fillRect(canvas.width-160, canvas.height-170, 130, 80);
-    ctx.fillStyle = '#ffd966';
-    ctx.font = "28px system-ui";
-    ctx.fillText("🏪", canvas.width-125, canvas.height-115);
-    
-    // Лесопилка с анимацией
-    if(lumberjacks > 0) {
-        ctx.fillStyle = '#6b4c3b';
-        ctx.fillRect(40, 25, 90, 75);
-        ctx.fillStyle = '#c9a87b';
-        ctx.fillRect(55, 40, 60, 45);
-        ctx.fillStyle = '#f0c674';
-        ctx.font = "26px system-ui";
-        ctx.fillText("🪵", 80, 80);
-    }
-    
-    // Алхимическая башня с сиянием
-    if(alchemyLevel > 0) {
-        ctx.shadowBlur = 20;
-        ctx.fillStyle = '#9b59b6';
-        ctx.fillRect(canvas.width-130, 35, 70, 100);
-        ctx.fillStyle = '#e0b0ff';
-        ctx.fillRect(canvas.width-120, 50, 50, 70);
-        ctx.fillStyle = '#f1c40f';
-        ctx.font = "28px system-ui";
-        ctx.fillText("🧪", canvas.width-100, 95);
-    }
-    
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    
-    // Кузнецы (с бликами)
-    for(let i=0; i<blacksmiths; i++) {
-        let x = 120 + (i%6)*50;
-        let y = canvas.height-90 - Math.floor(i/6)*70;
-        ctx.shadowBlur = 8;
-        ctx.fillStyle = '#e6b87e';
-        ctx.beginPath();
-        ctx.ellipse(x, y, 18, 20, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = '#2c1e0e';
-        ctx.font = "24px system-ui";
-        ctx.fillText("👨‍🏭", x-14, y-12);
-        // Искры
-        if(Math.random()<0.1) {
-            ctx.fillStyle = '#ffaa44';
-            ctx.beginPath();
-            ctx.arc(x+5, y-8, 3, 0, Math.PI*2);
-            ctx.fill();
-        }
-    }
-    
-    // Лесорубы с топорами
-    for(let n of extraNPCs) {
-        if(n.type !== 'lumberjack') continue;
-        ctx.fillStyle = '#7da06e';
-        ctx.beginPath();
-        ctx.ellipse(n.x, n.y, 15, 18, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = '#000';
-        ctx.font = "22px system-ui";
-        ctx.fillText("🪓", n.x-10, n.y-8);
-    }
-    
-    // Монстры с красной подсветкой
-    for(let m of monsters) {
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = '#ff0000';
-        ctx.fillStyle = '#8b1a1a';
-        ctx.beginPath();
-        ctx.ellipse(m.x, m.y, 20, 22, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = '#000';
-        ctx.font = "28px system-ui";
-        ctx.fillText("👾", m.x-14, m.y-6);
-        ctx.fillStyle = 'white';
-        ctx.font = "bold 12px monospace";
-        ctx.fillText(`${Math.floor(m.hp)}/${m.maxHp}`, m.x-18, m.y+16);
-    }
-    
-    // Корабль с золотым контуром
-    if(ships.length > 0) {
-        ctx.shadowBlur = 10;
-        ctx.fillStyle = '#2c5e2e';
-        ctx.fillRect(canvas.width-110, 45, 85, 45);
-        ctx.fillStyle = '#f0c674';
-        ctx.font = "28px system-ui";
-        ctx.fillText("🚢", canvas.width-80, 85);
-        ctx.fillStyle = '#ffd966';
-        ctx.font = "bold 12px monospace";
-        ctx.fillText(`💰${ships[0].price}`, canvas.width-70, 70);
-    }
-    ctx.shadowBlur = 0;
-    
-    // Частицы золота
-    if(Math.random()<0.3) {
-        ctx.fillStyle = '#f5b042';
-        ctx.beginPath();
-        ctx.arc(50 + Math.random()*canvas.width, canvas.height-50, 3, 0, Math.PI*2);
-        ctx.fill();
-    }
-};
-
-// ----- АНИМАЦИЯ ПАРЯЩИХ МОНЕТ -----
-let floatingCoins = [];
-setInterval(() => {
-    if(Math.random()<0.4 && weapons > 0) {
-        floatingCoins.push({ x: canvas.width-130, y: canvas.height-130, life: 1 });
-    }
-    for(let i=0;i<floatingCoins.length;i++) {
-        floatingCoins[i].y -= 2;
-        floatingCoins[i].life -= 0.02;
-        if(floatingCoins[i].life <= 0) floatingCoins.splice(i,1);
-    }
-}, 500);
-
-const originalDrawExt = drawExtended;
-drawExtended = function() {
-    premiumDraw();
-    for(let c of floatingCoins) {
-        ctx.globalAlpha = c.life;
-        ctx.fillStyle = '#f5b042';
-        ctx.font = "20px system-ui";
-        ctx.fillText("💰", c.x, c.y);
-        ctx.globalAlpha = 1;
-    }
-};
-
-// ----- ОБНОВЛЯЕМ UI С ПРЕМИУМ ЭФФЕКТАМИ -----
-setTimeout(() => {
-    upgradeToPremiumUI();
-    updateUIExtended();
-}, 100);
-
-// Добавляем эффект при продаже
-const originalSell = sellAll;
-sellAll = function() {
-    if(weapons > 0) {
-        let price = 12 + Math.floor(reputation / 10);
-        let total = weapons * price;
-        gold += total;
-        weapons = 0;
-        // Визуальный взрыв монет
-        for(let i=0;i<20;i++) {
-            floatingCoins.push({ x: canvas.width-130, y: canvas.height-130, life: 0.8 });
-        }
-        tg.HapticFeedback.notificationOccurred('success');
-        updateUIExtended();
-        drawExtended();
-    }
-};
-
-// Перехватываем обновление интерфейса для премиум кнопок
-const oldUIext = updateUIExtended;
-updateUIExtended = function() {
-    oldUIext();
-    upgradeToPremiumUI();
-};
-// ================== КОНЕЦ ЧАСТИ 3 ==================
+title();
 </script>
 </body>
 </html>
